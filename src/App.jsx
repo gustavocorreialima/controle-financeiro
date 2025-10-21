@@ -118,7 +118,7 @@ export default function ControleFinanceiro() {
         ...novoGastoFixo,
         id: Date.now(),
         valor: parseFloat(novoGastoFixo.valor),
-        statusMes: {} // {mes-ano: 'pago'/'pendente'}
+        statusMes: {}
       }]);
       setNovoGastoFixo({
         descricao: '',
@@ -159,7 +159,6 @@ export default function ControleFinanceiro() {
     }));
     setGastosDiarios([...gastosDiarios, ...novosGastos]);
     
-    // Marca todos como pagos no mês atual
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     setGastosFixos(gastosFixos.map(gf => ({
       ...gf,
@@ -186,14 +185,23 @@ export default function ControleFinanceiro() {
 
   const renderDashboard = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Dashboard
           </h1>
-          <p className="text-gray-400 text-sm md:text-base lg:text-lg">Controle total das suas finanças</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Controle total das suas finanças</p>
         </div>
-        <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-2xl shadow-green-500/20">
+      </div>
+      
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+        <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-2xl shadow-green-500/20 ml-auto">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Período Atual</p>
           <p className="text-green-400 font-black text-lg md:text-xl lg:text-2xl">{meses[mesSelecionado]}</p>
           <p className="text-green-500/70 text-xs md:text-sm font-bold">{anoSelecionado}</p>
@@ -512,6 +520,172 @@ export default function ControleFinanceiro() {
     </div>
   );
 
+  const renderRegistro = () => (
+    <div className="space-y-4 md:space-y-6 lg:space-y-8">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
+            Registrar Gastos
+          </h1>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Adicione seus gastos diários</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+        <div className="lg:col-span-1">
+          <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20 lg:sticky lg:top-6">
+            <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
+              <PlusCircle className="text-green-400 w-7 h-7 md:w-9 md:h-9" />
+              Novo Gasto
+            </h2>
+            <div className="space-y-4 md:space-y-5 lg:space-y-6">
+              <div>
+                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
+                  <span className="text-base md:text-xl">📅</span> Dia do Mês
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="31"
+                  value={novoGasto.dia}
+                  onChange={(e) => setNovoGasto({...novoGasto, dia: parseInt(e.target.value)})}
+                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-black text-base md:text-lg focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
+                />
+              </div>
+              <div>
+                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
+                  <span className="text-base md:text-xl">🏷️</span> Categoria
+                </label>
+                <select
+                  value={novoGasto.categoria}
+                  onChange={(e) => setNovoGasto({...novoGasto, categoria: e.target.value})}
+                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-black text-base md:text-lg focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
+                >
+                  {categorias.map(cat => (
+                    <option key={cat.key} value={cat.key}>{cat.icone} {cat.label}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
+                  <span className="text-base md:text-xl">📝</span> Descrição
+                </label>
+                <input
+                  type="text"
+                  value={novoGasto.descricao}
+                  onChange={(e) => setNovoGasto({...novoGasto, descricao: e.target.value})}
+                  placeholder="Ex: Almoço, Uber..."
+                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-medium focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all placeholder-gray-600 text-sm md:text-base"
+                />
+              </div>
+              <div>
+                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
+                  <span className="text-base md:text-xl">💰</span> Valor (R$)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={novoGasto.valor}
+                  onChange={(e) => setNovoGasto({...novoGasto, valor: e.target.value})}
+                  placeholder="0,00"
+                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 lg:py-5 text-green-400 text-xl md:text-2xl lg:text-3xl font-black focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all placeholder-gray-700"
+                />
+              </div>
+              <button
+                onClick={adicionarGasto}
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 md:py-4 lg:py-5 rounded-xl md:rounded-2xl transition-all duration-300 text-base md:text-lg lg:text-xl shadow-2xl shadow-green-500/50 hover:scale-105 hover:shadow-3xl hover:shadow-green-500/60 flex items-center justify-center gap-2 md:gap-3"
+              >
+                <PlusCircle className="w-6 h-6 md:w-7 md:h-7" />
+                Adicionar Gasto
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:col-span-2">
+          <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6 lg:mb-8">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 flex items-center gap-2 md:gap-3">
+                <span className="text-2xl md:text-3xl lg:text-4xl">📅</span>
+                <span className="hidden sm:inline">Gastos de {meses[mesSelecionado]} {anoSelecionado}</span>
+                <span className="sm:hidden">{meses[mesSelecionado]}/{anoSelecionado}</span>
+              </h2>
+              {gastosDiarios.length > 0 && (
+                <div className="bg-green-500/20 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-green-500/30">
+                  <p className="text-green-400 font-black text-sm md:text-base lg:text-lg">{gastosDiarios.length} gasto{gastosDiarios.length > 1 ? 's' : ''}</p>
+                </div>
+              )}
+            </div>
+            {gastosDiarios.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 md:py-24 lg:py-32 text-gray-500">
+                <div className="text-6xl md:text-7xl lg:text-9xl mb-4 md:mb-6 lg:mb-8 opacity-20">📊</div>
+                <p className="text-xl md:text-2xl lg:text-3xl mb-2 md:mb-3 font-black">Nenhum gasto registrado</p>
+                <p className="text-xs md:text-sm lg:text-base text-gray-600">Adicione seus gastos ao lado</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto -mx-4 md:mx-0">
+                <div className="inline-block min-w-full align-middle px-4 md:px-0">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b-2 border-green-500/30">
+                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Data</th>
+                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Categoria</th>
+                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider hidden md:table-cell">Descrição</th>
+                        <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Valor</th>
+                        <th className="p-2 md:p-3 lg:p-5 text-center text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {gastosDiarios.sort((a, b) => b.dia - a.dia).map((gasto, index) => {
+                        const cat = categorias.find(c => c.key === gasto.categoria);
+                        return (
+                          <tr key={gasto.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition-all ${index % 2 === 0 ? 'bg-black/20' : ''}`}>
+                            <td className="p-2 md:p-3 lg:p-5 text-gray-300 font-bold text-sm md:text-base lg:text-lg">{gasto.dia}/{mesSelecionado + 1}</td>
+                            <td className="p-2 md:p-3 lg:p-5">
+                              <span className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 lg:px-4 py-1 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `2px solid ${cat.cor}40` }}>
+                                <span className="text-base md:text-lg lg:text-xl">{cat.icone}</span>
+                                {cat.label}
+                              </span>
+                            </td>
+                            <td className="p-2 md:p-3 lg:p-5 text-gray-400 font-medium text-xs md:text-sm hidden md:table-cell">{gasto.descricao || '-'}</td>
+                            <td className="p-2 md:p-3 lg:p-5 text-right">
+                              <span className="text-red-400 font-black text-sm md:text-base lg:text-xl">-R$ {gasto.valor.toFixed(2)}</span>
+                            </td>
+                            <td className="p-2 md:p-3 lg:p-5 text-center">
+                              <button
+                                onClick={() => removerGasto(gasto.id)}
+                                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-2 md:px-3 lg:px-5 py-1 md:py-2 lg:py-3 rounded-lg md:rounded-xl font-bold transition-all duration-300 hover:scale-110 shadow-lg shadow-red-500/50 flex items-center gap-1 md:gap-2 mx-auto text-xs md:text-sm"
+                              >
+                                <span className="hidden sm:inline">🗑️</span> Excluir
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t-2 border-green-500/50 bg-gradient-to-r from-black/50 to-black/30">
+                        <td colSpan="3" className="p-2 md:p-3 lg:p-5 text-right font-black text-green-300 text-sm md:text-base lg:text-xl uppercase">Total:</td>
+                        <td className="p-2 md:p-3 lg:p-5 text-right text-red-400 font-black text-lg md:text-2xl lg:text-3xl">-R$ {totalGasto.toFixed(2)}</td>
+                        <td></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   const renderGastosFixos = () => {
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     const totalGastosFixos = gastosFixos.reduce((acc, gf) => acc + gf.valor, 0);
@@ -520,14 +694,23 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
+        <div className="flex items-center gap-3 md:gap-4 mb-4">
+          <button
+            onClick={() => setMenuAberto(!menuAberto)}
+            className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          >
+            {menuAberto ? <X size={24} /> : <Menu size={24} />}
+          </button>
+          <div className="flex-1">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
               Gastos Fixos Mensais
             </h1>
-            <p className="text-gray-400 text-sm md:text-base lg:text-lg">Gerencie suas despesas recorrentes</p>
+            <p className="text-gray-400 text-xs md:text-sm lg:text-base">Gerencie suas despesas recorrentes</p>
           </div>
-          <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20">
+        </div>
+        
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 ml-auto">
             <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Mensal</p>
             <p className="text-purple-400 font-black text-lg md:text-xl lg:text-2xl">R$ {totalGastosFixos.toFixed(2)}</p>
             <p className="text-purple-500/70 text-xs md:text-sm font-bold">{gastosFixos.length} gasto{gastosFixos.length !== 1 ? 's' : ''} fixo{gastosFixos.length !== 1 ? 's' : ''}</p>
@@ -726,174 +909,20 @@ export default function ControleFinanceiro() {
     );
   };
 
-  const renderRegistro = () => (
-    <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
-            Registrar Gastos
-          </h1>
-          <p className="text-gray-400 text-sm md:text-base lg:text-lg">Adicione seus gastos diários</p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-        <div className="lg:col-span-1">
-          <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20 lg:sticky lg:top-6">
-            <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
-              <PlusCircle className="text-green-400 w-7 h-7 md:w-9 md:h-9" />
-              Novo Gasto
-            </h2>
-            <div className="space-y-4 md:space-y-5 lg:space-y-6">
-              <div>
-                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
-                  <span className="text-base md:text-xl">📅</span> Dia do Mês
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="31"
-                  value={novoGasto.dia}
-                  onChange={(e) => setNovoGasto({...novoGasto, dia: parseInt(e.target.value)})}
-                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-black text-base md:text-lg focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
-                  <span className="text-base md:text-xl">🏷️</span> Categoria
-                </label>
-                <select
-                  value={novoGasto.categoria}
-                  onChange={(e) => setNovoGasto({...novoGasto, categoria: e.target.value})}
-                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-black text-base md:text-lg focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
-                >
-                  {categorias.map(cat => (
-                    <option key={cat.key} value={cat.key}>{cat.icone} {cat.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
-                  <span className="text-base md:text-xl">📝</span> Descrição
-                </label>
-                <input
-                  type="text"
-                  value={novoGasto.descricao}
-                  onChange={(e) => setNovoGasto({...novoGasto, descricao: e.target.value})}
-                  placeholder="Ex: Almoço, Uber..."
-                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-green-400 font-medium focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all placeholder-gray-600 text-sm md:text-base"
-                />
-              </div>
-              <div>
-                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
-                  <span className="text-base md:text-xl">💰</span> Valor (R$)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={novoGasto.valor}
-                  onChange={(e) => setNovoGasto({...novoGasto, valor: e.target.value})}
-                  placeholder="0,00"
-                  className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 lg:py-5 text-green-400 text-xl md:text-2xl lg:text-3xl font-black focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all placeholder-gray-700"
-                />
-              </div>
-              <button
-                onClick={adicionarGasto}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 md:py-4 lg:py-5 rounded-xl md:rounded-2xl transition-all duration-300 text-base md:text-lg lg:text-xl shadow-2xl shadow-green-500/50 hover:scale-105 hover:shadow-3xl hover:shadow-green-500/60 flex items-center justify-center gap-2 md:gap-3"
-              >
-                <PlusCircle className="w-6 h-6 md:w-7 md:h-7" />
-                Adicionar Gasto
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="lg:col-span-2">
-          <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6 lg:mb-8">
-              <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 flex items-center gap-2 md:gap-3">
-                <span className="text-2xl md:text-3xl lg:text-4xl">📅</span>
-                <span className="hidden sm:inline">Gastos de {meses[mesSelecionado]} {anoSelecionado}</span>
-                <span className="sm:hidden">{meses[mesSelecionado]}/{anoSelecionado}</span>
-              </h2>
-              {gastosDiarios.length > 0 && (
-                <div className="bg-green-500/20 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-green-500/30">
-                  <p className="text-green-400 font-black text-sm md:text-base lg:text-lg">{gastosDiarios.length} gasto{gastosDiarios.length > 1 ? 's' : ''}</p>
-                </div>
-              )}
-            </div>
-            {gastosDiarios.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 md:py-24 lg:py-32 text-gray-500">
-                <div className="text-6xl md:text-7xl lg:text-9xl mb-4 md:mb-6 lg:mb-8 opacity-20">📊</div>
-                <p className="text-xl md:text-2xl lg:text-3xl mb-2 md:mb-3 font-black">Nenhum gasto registrado</p>
-                <p className="text-xs md:text-sm lg:text-base text-gray-600">Adicione seus gastos ao lado</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto -mx-4 md:mx-0">
-                <div className="inline-block min-w-full align-middle px-4 md:px-0">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b-2 border-green-500/30">
-                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Data</th>
-                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Categoria</th>
-                        <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black text-xs md:text-sm uppercase tracking-wider hidden md:table-cell">Descrição</th>
-                        <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Valor</th>
-                        <th className="p-2 md:p-3 lg:p-5 text-center text-green-300 font-black text-xs md:text-sm uppercase tracking-wider">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {gastosDiarios.sort((a, b) => b.dia - a.dia).map((gasto, index) => {
-                        const cat = categorias.find(c => c.key === gasto.categoria);
-                        return (
-                          <tr key={gasto.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition-all ${index % 2 === 0 ? 'bg-black/20' : ''}`}>
-                            <td className="p-2 md:p-3 lg:p-5 text-gray-300 font-bold text-sm md:text-base lg:text-lg">{gasto.dia}/{mesSelecionado + 1}</td>
-                            <td className="p-2 md:p-3 lg:p-5">
-                              <span className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 lg:px-4 py-1 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `2px solid ${cat.cor}40` }}>
-                                <span className="text-base md:text-lg lg:text-xl">{cat.icone}</span>
-                                {cat.label}
-                              </span>
-                            </td>
-                            <td className="p-2 md:p-3 lg:p-5 text-gray-400 font-medium text-xs md:text-sm hidden md:table-cell">{gasto.descricao || '-'}</td>
-                            <td className="p-2 md:p-3 lg:p-5 text-right">
-                              <span className="text-red-400 font-black text-sm md:text-base lg:text-xl">-R$ {gasto.valor.toFixed(2)}</span>
-                            </td>
-                            <td className="p-2 md:p-3 lg:p-5 text-center">
-                              <button
-                                onClick={() => removerGasto(gasto.id)}
-                                className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white px-2 md:px-3 lg:px-5 py-1 md:py-2 lg:py-3 rounded-lg md:rounded-xl font-bold transition-all duration-300 hover:scale-110 shadow-lg shadow-red-500/50 flex items-center gap-1 md:gap-2 mx-auto text-xs md:text-sm"
-                              >
-                                <span className="hidden sm:inline">🗑️</span> Excluir
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot>
-                      <tr className="border-t-2 border-green-500/50 bg-gradient-to-r from-black/50 to-black/30">
-                        <td colSpan="3" className="p-2 md:p-3 lg:p-5 text-right font-black text-green-300 text-sm md:text-base lg:text-xl uppercase">Total:</td>
-                        <td className="p-2 md:p-3 lg:p-5 text-right text-red-400 font-black text-lg md:text-2xl lg:text-3xl">-R$ {totalGasto.toFixed(2)}</td>
-                        <td></td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   const renderOrcamento = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Orçamento Mensal
           </h1>
-          <p className="text-gray-400 text-sm md:text-base lg:text-lg">Configure seu salário e planeje</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e planeje</p>
         </div>
       </div>
 
@@ -995,11 +1024,19 @@ export default function ControleFinanceiro() {
 
   const renderAnalises = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
-          Análises Detalhadas
-        </h1>
-        <p className="text-gray-400 text-sm md:text-base lg:text-lg">Desempenho de cada categoria</p>
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
+            Análises Detalhadas
+          </h1>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Desempenho de cada categoria</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
@@ -1117,11 +1154,19 @@ export default function ControleFinanceiro() {
 
   const renderRelatorios = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div>
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
-          Relatórios
-        </h1>
-        <p className="text-gray-400 text-sm md:text-base lg:text-lg">Comparações e estatísticas</p>
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
+            Relatórios
+          </h1>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Comparações e estatísticas</p>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
@@ -1301,16 +1346,7 @@ export default function ControleFinanceiro() {
         />
       )}
 
-      <button
-        onClick={() => setMenuAberto(!menuAberto)}
-        className={`lg:hidden fixed top-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 ${
-          menuAberto ? 'right-4' : 'left-4'
-        }`}
-      >
-        {menuAberto ? <X size={24} /> : <Menu size={24} />}
-      </button>
-
-      <div className="flex-1 p-4 md:p-6 lg:p-8 lg:p-10 overflow-y-auto custom-scrollbar pt-16 lg:pt-8">
+      <div className="flex-1 p-4 md:p-6 lg:p-8 lg:p-10 overflow-y-auto custom-scrollbar lg:pt-8">
         {paginaAtual === 'orcamento' && renderOrcamento()}
         {paginaAtual === 'dashboard' && renderDashboard()}
         {paginaAtual === 'registro' && renderRegistro()}
