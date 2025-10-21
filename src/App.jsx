@@ -900,17 +900,17 @@ export default function ControleFinanceiro() {
 
       <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
         <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8">Tabela Resumo</h2>
-        <div className="overflow-x-auto -mx-4 md:mx-0">
+        <div className="overflow-x-auto -mx-4 md:mx-0 custom-scrollbar">
           <div className="inline-block min-w-full align-middle px-4 md:px-0">
-            <table className="w-full">
+            <table className="w-full min-w-[800px]">
               <thead>
                 <tr className="border-b-2 border-green-500/50">
-                  <th className="p-2 md:p-3 lg:p-5 text-left text-green-300 font-black uppercase text-xs md:text-sm tracking-wider">Categoria</th>
-                  <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-xs md:text-sm tracking-wider">Orçamento</th>
-                  <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-xs md:text-sm tracking-wider">Gasto</th>
-                  <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-xs md:text-sm tracking-wider">Restante</th>
-                  <th className="p-2 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-xs md:text-sm tracking-wider hidden sm:table-cell">%</th>
-                  <th className="p-2 md:p-3 lg:p-5 text-center text-green-300 font-black uppercase text-xs md:text-sm tracking-wider hidden md:table-cell">Status</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-left text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">Categoria</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">Orçamento</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">Gasto</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">Restante</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-right text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">%</th>
+                  <th className="p-1.5 md:p-3 lg:p-5 text-center text-green-300 font-black uppercase text-[10px] md:text-sm tracking-wider whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -922,19 +922,19 @@ export default function ControleFinanceiro() {
 
                   return (
                     <tr key={cat.key} className={`border-b border-gray-800 hover:bg-gray-800/50 transition-colors ${index % 2 === 0 ? 'bg-black/20' : ''}`}>
-                      <td className="p-2 md:p-3 lg:p-5">
-                        <span className="font-black flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg" style={{ color: cat.cor }}>
-                          <span className="text-lg md:text-xl lg:text-2xl">{cat.icone}</span>
+                      <td className="p-1.5 md:p-3 lg:p-5">
+                        <span className="font-black flex items-center gap-1.5 md:gap-3 text-xs md:text-base lg:text-lg whitespace-nowrap" style={{ color: cat.cor }}>
+                          <span className="text-base md:text-xl lg:text-2xl">{cat.icone}</span>
                           <span className="hidden sm:inline">{cat.label}</span>
                         </span>
                       </td>
-                      <td className="p-2 md:p-3 lg:p-5 text-right text-blue-400 font-bold text-xs md:text-sm lg:text-lg">R$ {orcamento.toFixed(2)}</td>
-                      <td className="p-2 md:p-3 lg:p-5 text-right text-red-400 font-black text-xs md:text-sm lg:text-lg">R$ {gasto.toFixed(2)}</td>
-                      <td className={`p-2 md:p-3 lg:p-5 text-right font-black text-xs md:text-sm lg:text-lg ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
+                      <td className="p-1.5 md:p-3 lg:p-5 text-right text-blue-400 font-bold text-[10px] md:text-sm lg:text-lg whitespace-nowrap">R$ {orcamento.toFixed(2)}</td>
+                      <td className="p-1.5 md:p-3 lg:p-5 text-right text-red-400 font-black text-[10px] md:text-sm lg:text-lg whitespace-nowrap">R$ {gasto.toFixed(2)}</td>
+                      <td className={`p-1.5 md:p-3 lg:p-5 text-right font-black text-[10px] md:text-sm lg:text-lg whitespace-nowrap ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
                         R$ {Math.abs(restante).toFixed(2)}
                       </td>
-                      <td className="p-2 md:p-3 lg:p-5 text-right font-bold text-gray-300 text-xs md:text-sm lg:text-lg hidden sm:table-cell">{percentual.toFixed(1)}%</td>
-                      <td className="p-2 md:p-3 lg:p-5 text-center text-xl md:text-2xl lg:text-3xl hidden md:table-cell">
+                      <td className="p-1.5 md:p-3 lg:p-5 text-right font-bold text-gray-300 text-[10px] md:text-sm lg:text-lg whitespace-nowrap">{percentual.toFixed(1)}%</td>
+                      <td className="p-1.5 md:p-3 lg:p-5 text-center text-lg md:text-2xl lg:text-3xl whitespace-nowrap">
                         {restante >= 0 ? (percentual < 80 ? '✅' : '⚠️') : '❌'}
                       </td>
                     </tr>
@@ -943,16 +943,16 @@ export default function ControleFinanceiro() {
               </tbody>
               <tfoot>
                 <tr className="border-t-2 border-green-500/50 bg-gradient-to-r from-black/50 to-black/30">
-                  <td className="p-2 md:p-3 lg:p-5 font-black text-green-300 text-sm md:text-base lg:text-xl uppercase">Total</td>
-                  <td className="p-2 md:p-3 lg:p-5 text-right text-blue-400 font-black text-sm md:text-base lg:text-xl">R$ {totalOrcamento.toFixed(2)}</td>
-                  <td className="p-2 md:p-3 lg:p-5 text-right text-red-400 font-black text-sm md:text-base lg:text-xl">R$ {totalGasto.toFixed(2)}</td>
-                  <td className={`p-2 md:p-3 lg:p-5 text-right font-black text-sm md:text-base lg:text-xl ${(totalOrcamento - totalGasto) >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
+                  <td className="p-1.5 md:p-3 lg:p-5 font-black text-green-300 text-xs md:text-base lg:text-xl uppercase whitespace-nowrap">Total</td>
+                  <td className="p-1.5 md:p-3 lg:p-5 text-right text-blue-400 font-black text-xs md:text-base lg:text-xl whitespace-nowrap">R$ {totalOrcamento.toFixed(2)}</td>
+                  <td className="p-1.5 md:p-3 lg:p-5 text-right text-red-400 font-black text-xs md:text-base lg:text-xl whitespace-nowrap">R$ {totalGasto.toFixed(2)}</td>
+                  <td className={`p-1.5 md:p-3 lg:p-5 text-right font-black text-xs md:text-base lg:text-xl whitespace-nowrap ${(totalOrcamento - totalGasto) >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
                     R$ {Math.abs(totalOrcamento - totalGasto).toFixed(2)}
                   </td>
-                  <td className="p-2 md:p-3 lg:p-5 text-right font-black text-sm md:text-base lg:text-xl text-gray-300 hidden sm:table-cell">
+                  <td className="p-1.5 md:p-3 lg:p-5 text-right font-black text-xs md:text-base lg:text-xl text-gray-300 whitespace-nowrap">
                     {totalOrcamento > 0 ? ((totalGasto / totalOrcamento) * 100).toFixed(1) : 0}%
                   </td>
-                  <td className="hidden md:table-cell"></td>
+                  <td></td>
                 </tr>
               </tfoot>
             </table>
@@ -1045,9 +1045,10 @@ export default function ControleFinanceiro() {
           to { opacity: 1; transform: translateX(0); }
         }
         .animate-slideIn { animation: slideIn 0.5s ease-out; }
-        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #10b981, #059669); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #059669, #047857); }
       `}</style>
     </div>
   );
