@@ -141,7 +141,7 @@ export default function ControleFinanceiro() {
           <div className="relative">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="p-2 md:p-3 bg-green-500/20 rounded-xl md:rounded-2xl">
-                <DollarSign className="text-green-400" size={window.innerWidth < 768 ? 24 : 32} />
+                <DollarSign className="text-green-400 w-6 h-6 md:w-8 md:h-8" />
               </div>
               <div className="text-xs font-bold px-2 md:px-3 py-1 bg-green-500/20 text-green-400 rounded-full border border-green-500/30">
                 RECEITA
@@ -158,7 +158,7 @@ export default function ControleFinanceiro() {
           <div className="relative">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="p-2 md:p-3 bg-blue-500/20 rounded-xl md:rounded-2xl">
-                <TrendingUp className="text-blue-400" size={window.innerWidth < 768 ? 24 : 32} />
+                <TrendingUp className="text-blue-400 w-6 h-6 md:w-8 md:h-8" />
               </div>
               <div className="text-xs font-bold px-2 md:px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full border border-blue-500/30">
                 PLANEJADO
@@ -177,7 +177,7 @@ export default function ControleFinanceiro() {
           <div className="relative">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className="p-2 md:p-3 bg-red-500/20 rounded-xl md:rounded-2xl">
-                <TrendingDown className="text-red-400" size={window.innerWidth < 768 ? 24 : 32} />
+                <TrendingDown className="text-red-400 w-6 h-6 md:w-8 md:h-8" />
               </div>
               <div className="text-xs font-bold px-2 md:px-3 py-1 bg-red-500/20 text-red-400 rounded-full border border-red-500/30">
                 DESPESAS
@@ -196,7 +196,7 @@ export default function ControleFinanceiro() {
           <div className="relative">
             <div className="flex items-center justify-between mb-3 md:mb-4">
               <div className={`p-2 md:p-3 rounded-xl md:rounded-2xl ${saldoRestante >= 0 ? 'bg-cyan-500/20' : 'bg-orange-500/20'}`}>
-                {saldoRestante >= 0 ? <CheckCircle className="text-cyan-400" size={window.innerWidth < 768 ? 24 : 32} /> : <AlertCircle className="text-orange-400" size={window.innerWidth < 768 ? 24 : 32} />}
+                {saldoRestante >= 0 ? <CheckCircle className="text-cyan-400 w-6 h-6 md:w-8 md:h-8" /> : <AlertCircle className="text-orange-400 w-6 h-6 md:w-8 md:h-8" />}
               </div>
               <div className={`text-xs font-bold px-2 md:px-3 py-1 rounded-full border ${saldoRestante >= 0 ? 'bg-cyan-500/20 text-cyan-400 border-cyan-500/30' : 'bg-orange-500/20 text-orange-400 border-orange-500/30'}`}>
                 {saldoRestante >= 0 ? 'POSITIVO' : 'NEGATIVO'}
@@ -285,7 +285,7 @@ export default function ControleFinanceiro() {
             <span className="sm:hidden">Gastos</span>
           </h2>
           {totalGasto > 0 ? (
-            <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 250 : 360}>
+            <ResponsiveContainer width="100%" height={360}>
               <PieChart>
                 <Pie
                   data={categorias.map(cat => ({
@@ -296,11 +296,11 @@ export default function ControleFinanceiro() {
                   cx="50%"
                   cy="50%"
                   labelLine={false}
-                  label={({ name, percent }) => window.innerWidth < 768 ? `${(percent * 100).toFixed(0)}%` : `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={window.innerWidth < 768 ? 80 : 120}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={100}
                   dataKey="value"
                   animationBegin={0}
-                  animationDuration={1000}
+                  animationDuration={800}
                 >
                   {categorias.map((cat, index) => (
                     <Cell key={`cell-${index}`} fill={cat.cor} />
@@ -462,7 +462,7 @@ export default function ControleFinanceiro() {
         <div className="lg:col-span-1">
           <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20 lg:sticky lg:top-6">
             <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
-              <PlusCircle size={window.innerWidth < 768 ? 28 : 36} className="text-green-400" />
+              <PlusCircle className="text-green-400 w-7 h-7 md:w-9 md:h-9" />
               Novo Gasto
             </h2>
             <div className="space-y-4 md:space-y-5 lg:space-y-6">
@@ -522,7 +522,7 @@ export default function ControleFinanceiro() {
                 onClick={adicionarGasto}
                 className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 md:py-4 lg:py-5 rounded-xl md:rounded-2xl transition-all duration-300 text-base md:text-lg lg:text-xl shadow-2xl shadow-green-500/50 hover:scale-105 hover:shadow-3xl hover:shadow-green-500/60 flex items-center justify-center gap-2 md:gap-3"
               >
-                <PlusCircle size={window.innerWidth < 768 ? 24 : 28} />
+                <PlusCircle className="w-6 h-6 md:w-7 md:h-7" />
                 Adicionar Gasto
               </button>
             </div>
@@ -783,27 +783,27 @@ export default function ControleFinanceiro() {
               <div className={`rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 mb-4 border-l-4 ${restante > 0 && percentual < 50 ? 'bg-green-900/30 border-green-500' : restante > 0 && percentual < 80 ? 'bg-yellow-900/30 border-yellow-500' : restante > 0 ? 'bg-orange-900/30 border-orange-500' : 'bg-red-900/30 border-red-500'}`}>
                 {restante > 0 && percentual < 50 && (
                   <p className="text-green-400 font-bold flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg">
-                    <CheckCircle size={window.innerWidth < 768 ? 16 : 20} />
+                    <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Ótimo! Você ainda pode gastar R$ {restante.toFixed(2)}</span>
                     <span className="sm:hidden">Pode gastar R$ {restante.toFixed(2)}</span>
                   </p>
                 )}
                 {restante > 0 && percentual >= 50 && percentual < 80 && (
                   <p className="text-yellow-400 font-bold flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg">
-                    <AlertCircle size={window.innerWidth < 768 ? 16 : 20} />
+                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />
                     Atenção! {percentual.toFixed(0)}% usado
                   </p>
                 )}
                 {restante > 0 && percentual >= 80 && percentual < 100 && (
                   <p className="text-orange-400 font-bold flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg">
-                    <AlertCircle size={window.innerWidth < 768 ? 16 : 20} />
+                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Cuidado! Apenas R$ {restante.toFixed(2)} restantes</span>
                     <span className="sm:hidden">Só restam R$ {restante.toFixed(2)}</span>
                   </p>
                 )}
                 {restante <= 0 && (
                   <p className="text-red-400 font-bold flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg">
-                    <AlertCircle size={window.innerWidth < 768 ? 16 : 20} />
+                    <AlertCircle className="w-4 h-4 md:w-5 md:h-5" />
                     <span className="hidden sm:inline">Orçamento excedido em R$ {Math.abs(restante).toFixed(2)}!</span>
                     <span className="sm:hidden">Excedido R$ {Math.abs(restante).toFixed(2)}</span>
                   </p>
@@ -848,20 +848,20 @@ export default function ControleFinanceiro() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8">Orçado vs Gasto</h2>
-          <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 280 : 380}>
+          <ResponsiveContainer width="100%" height={380}>
             <BarChart data={categorias.map(cat => ({
               categoria: cat.label.split(' ')[0],
               Orçado: parseFloat(orcamentos[cat.key]) || 0,
               Gasto: gastosReais[cat.key] || 0
             }))}>
               <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-              <XAxis dataKey="categoria" stroke="#9ca3af" angle={-20} textAnchor="end" height={90} style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px', fontWeight: 'bold' }} />
-              <YAxis stroke="#9ca3af" style={{ fontSize: window.innerWidth < 768 ? '10px' : '12px', fontWeight: 'bold' }} />
+              <XAxis dataKey="categoria" stroke="#9ca3af" angle={-20} textAnchor="end" height={90} style={{ fontSize: '12px', fontWeight: 'bold' }} />
+              <YAxis stroke="#9ca3af" style={{ fontSize: '12px', fontWeight: 'bold' }} />
               <Tooltip 
                 formatter={(value) => `R$ ${value.toFixed(2)}`}
                 contentStyle={{ backgroundColor: '#1f2937', border: '2px solid #10b981', borderRadius: '12px', padding: '8px', fontSize: '12px' }}
               />
-              <Legend wrapperStyle={{ paddingTop: '10px', fontSize: window.innerWidth < 768 ? '12px' : '14px' }} />
+              <Legend wrapperStyle={{ paddingTop: '10px', fontSize: '14px' }} />
               <Bar dataKey="Orçado" fill="#10b981" radius={[10, 10, 0, 0]} />
               <Bar dataKey="Gasto" fill="#ef4444" radius={[10, 10, 0, 0]} />
             </BarChart>
@@ -870,7 +870,7 @@ export default function ControleFinanceiro() {
 
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8">Distribuição %</h2>
-          <ResponsiveContainer width="100%" height={window.innerWidth < 768 ? 280 : 380}>
+          <ResponsiveContainer width="100%" height={380}>
             <PieChart>
               <Pie
                 data={categorias.map(cat => ({
@@ -880,10 +880,10 @@ export default function ControleFinanceiro() {
                 cx="50%"
                 cy="50%"
                 labelLine={true}
-                label={({ name, percent }) => window.innerWidth < 768 ? `${(percent * 100).toFixed(0)}%` : `${name}: ${(percent * 100).toFixed(1)}%`}
-                outerRadius={window.innerWidth < 768 ? 90 : 130}
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                outerRadius={110}
                 dataKey="value"
-                animationDuration={1000}
+                animationDuration={800}
               >
                 {categorias.map((cat, index) => (
                   <Cell key={`cell-${index}`} fill={cat.cor} />
@@ -966,7 +966,7 @@ export default function ControleFinanceiro() {
     <div className="flex min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-green-400">
       {mostrarSalvo && (
         <div className="fixed top-4 right-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-white px-4 md:px-6 py-3 md:py-4 rounded-xl md:rounded-2xl shadow-2xl shadow-green-500/50 flex items-center gap-2 md:gap-3 animate-slideIn">
-          <Save size={window.innerWidth < 768 ? 20 : 24} className="animate-pulse" />
+          <Save className="animate-pulse w-5 h-5 md:w-6 md:h-6" />
           <span className="font-bold text-sm md:text-base">Salvo!</span>
         </div>
       )}
@@ -1004,7 +1004,7 @@ export default function ControleFinanceiro() {
                     : 'hover:bg-gray-800/70 text-green-400 hover:scale-105 hover:shadow-xl'
                 }`}
               >
-                <Icon size={window.innerWidth < 768 ? 24 : 28} />
+                <Icon className="w-6 h-6 md:w-7 md:h-7" />
                 <span className="text-sm md:text-base font-bold">{item.label}</span>
               </button>
             );
@@ -1029,10 +1029,10 @@ export default function ControleFinanceiro() {
       )}
 
       <button
-        onClick={() => setMenuAberto(true)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-4 rounded-full shadow-2xl shadow-green-500/50 hover:scale-110 transition-all"
+        onClick={() => setMenuAberto(!menuAberto)}
+        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all"
       >
-        <Menu size={24} />
+        {menuAberto ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       <div className="flex-1 p-4 md:p-6 lg:p-8 lg:p-10 overflow-y-auto custom-scrollbar">
