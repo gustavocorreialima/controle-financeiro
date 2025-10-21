@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircle, CheckCircle, TrendingDown, Save } from 'lucide-react';
+import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircle, CheckCircle, TrendingDown, Save, Calendar, Repeat } from 'lucide-react';
 
 export default function ControleFinanceiro() {
   const [paginaAtual, setPaginaAtual] = useState('orcamento');
@@ -19,11 +19,18 @@ export default function ControleFinanceiro() {
     outros: ''
   });
   const [gastosDiarios, setGastosDiarios] = useState([]);
+  const [gastosFixos, setGastosFixos] = useState([]);
   const [novoGasto, setNovoGasto] = useState({
     dia: new Date().getDate(),
     categoria: 'alimentacao',
     descricao: '',
     valor: ''
+  });
+  const [novoGastoFixo, setNovoGastoFixo] = useState({
+    descricao: '',
+    valor: '',
+    categoria: 'comprasFixas',
+    diaVencimento: 1
   });
   const [mostrarSalvo, setMostrarSalvo] = useState(false);
 
@@ -45,6 +52,7 @@ export default function ControleFinanceiro() {
     { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'registro', label: 'Registrar', icon: PlusCircle },
+    { id: 'gastosfixos', label: 'Gastos Fixos', icon: Repeat },
     { id: 'analises', label: 'Análises', icon: TrendingUp },
     { id: 'relatorios', label: 'Relatórios', icon: FileText }
   ];
@@ -59,6 +67,7 @@ export default function ControleFinanceiro() {
         setAnoSelecionado(dados.anoSelecionado || new Date().getFullYear());
         setOrcamentos(dados.orcamentos || {});
         setGastosDiarios(dados.gastosDiarios || []);
+        setGastosFixos(dados.gastosFixos || []);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       }
@@ -72,15 +81,16 @@ export default function ControleFinanceiro() {
       anoSelecionado,
       orcamentos,
       gastosDiarios,
+      gastosFixos,
       ultimaAtualizacao: new Date().toISOString()
     };
     localStorage.setItem('controleFinanceiro', JSON.stringify(dados));
     
-    if (salario || gastosDiarios.length > 0) {
+    if (salario || gastosDiarios.length > 0 || gastosFixos.length > 0) {
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
     }
-  }, [salario, mesSelecionado, anoSelecionado, orcamentos, gastosDiarios]);
+  }, [salario, mesSelecionado, anoSelecionado, orcamentos, gastosDiarios, gastosFixos]);
 
   const adicionarGasto = () => {
     if (novoGasto.valor && parseFloat(novoGasto.valor) > 0) {
@@ -100,6 +110,61 @@ export default function ControleFinanceiro() {
 
   const removerGasto = (id) => {
     setGastosDiarios(gastosDiarios.filter(g => g.id !== id));
+  };
+
+  const adicionarGastoFixo = () => {
+    if (novoGastoFixo.descricao && novoGastoFixo.valor && parseFloat(novoGastoFixo.valor) > 0) {
+      setGastosFixos([...gastosFixos, {
+        ...novoGastoFixo,
+        id: Date.now(),
+        valor: parseFloat(novoGastoFixo.valor),
+        statusMes: {} // {mes-ano: 'pago'/'pendente'}
+      }]);
+      setNovoGastoFixo({
+        descricao: '',
+        valor: '',
+        categoria: 'comprasFixas',
+        diaVencimento: 1
+      });
+    }
+  };
+
+  const removerGastoFixo = (id) => {
+    setGastosFixos(gastosFixos.filter(g => g.id !== id));
+  };
+
+  const toggleStatusGastoFixo = (id) => {
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    setGastosFixos(gastosFixos.map(gf => {
+      if (gf.id === id) {
+        const novoStatus = {...gf.statusMes};
+        if (novoStatus[mesAno] === 'pago') {
+          delete novoStatus[mesAno];
+        } else {
+          novoStatus[mesAno] = 'pago';
+        }
+        return {...gf, statusMes: novoStatus};
+      }
+      return gf;
+    }));
+  };
+
+  const aplicarGastosFixosNoMes = () => {
+    const novosGastos = gastosFixos.map(gf => ({
+      id: Date.now() + Math.random(),
+      dia: gf.diaVencimento,
+      categoria: gf.categoria,
+      descricao: gf.descricao + ' (Fixo)',
+      valor: gf.valor
+    }));
+    setGastosDiarios([...gastosDiarios, ...novosGastos]);
+    
+    // Marca todos como pagos no mês atual
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    setGastosFixos(gastosFixos.map(gf => ({
+      ...gf,
+      statusMes: {...gf.statusMes, [mesAno]: 'pago'}
+    })));
   };
 
   const calcularGastosPorCategoria = () => {
@@ -446,6 +511,220 @@ export default function ControleFinanceiro() {
       `}</style>
     </div>
   );
+
+  const renderGastosFixos = () => {
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    const totalGastosFixos = gastosFixos.reduce((acc, gf) => acc + gf.valor, 0);
+    const gastosPagos = gastosFixos.filter(gf => gf.statusMes[mesAno] === 'pago').length;
+    const gastosPendentes = gastosFixos.length - gastosPagos;
+
+    return (
+      <div className="space-y-4 md:space-y-6 lg:space-y-8">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-2">
+              Gastos Fixos Mensais
+            </h1>
+            <p className="text-gray-400 text-sm md:text-base lg:text-lg">Gerencie suas despesas recorrentes</p>
+          </div>
+          <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20">
+            <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Mensal</p>
+            <p className="text-purple-400 font-black text-lg md:text-xl lg:text-2xl">R$ {totalGastosFixos.toFixed(2)}</p>
+            <p className="text-purple-500/70 text-xs md:text-sm font-bold">{gastosFixos.length} gasto{gastosFixos.length !== 1 ? 's' : ''} fixo{gastosFixos.length !== 1 ? 's' : ''}</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 lg:gap-6">
+          <div className="bg-gradient-to-br from-purple-900/50 via-purple-800/30 to-purple-900/20 border-2 border-purple-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl shadow-purple-500/20">
+            <div className="flex items-center gap-3 mb-2">
+              <Repeat className="text-purple-400 w-6 h-6 md:w-8 md:h-8" />
+              <p className="text-gray-400 text-xs md:text-sm font-medium">Total de Gastos</p>
+            </div>
+            <p className="text-2xl md:text-3xl font-black text-purple-400">{gastosFixos.length}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-green-900/50 via-green-800/30 to-green-900/20 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl shadow-green-500/20">
+            <div className="flex items-center gap-3 mb-2">
+              <CheckCircle className="text-green-400 w-6 h-6 md:w-8 md:h-8" />
+              <p className="text-gray-400 text-xs md:text-sm font-medium">Pagos em {meses[mesSelecionado]}</p>
+            </div>
+            <p className="text-2xl md:text-3xl font-black text-green-400">{gastosPagos}</p>
+          </div>
+
+          <div className="bg-gradient-to-br from-orange-900/50 via-orange-800/30 to-orange-900/20 border-2 border-orange-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl shadow-orange-500/20">
+            <div className="flex items-center gap-3 mb-2">
+              <AlertCircle className="text-orange-400 w-6 h-6 md:w-8 md:h-8" />
+              <p className="text-gray-400 text-xs md:text-sm font-medium">Pendentes</p>
+            </div>
+            <p className="text-2xl md:text-3xl font-black text-orange-400">{gastosPendentes}</p>
+          </div>
+        </div>
+
+        {gastosFixos.length > 0 && gastosPendentes > 0 && (
+          <div className="bg-gradient-to-br from-purple-900/40 via-purple-800/30 to-purple-900/20 border-2 border-purple-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div className="flex items-start gap-3">
+                <Repeat className="text-purple-400 w-8 h-8 mt-1" />
+                <div>
+                  <h3 className="text-xl md:text-2xl font-black text-purple-400 mb-2">Aplicar Gastos Fixos</h3>
+                  <p className="text-gray-300 text-sm md:text-base">Adicione todos os gastos fixos pendentes aos registros de {meses[mesSelecionado]}</p>
+                </div>
+              </div>
+              <button
+                onClick={aplicarGastosFixosNoMes}
+                className="w-full md:w-auto bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-black px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl transition-all duration-300 shadow-2xl shadow-purple-500/50 hover:scale-105 flex items-center justify-center gap-2 whitespace-nowrap"
+              >
+                <PlusCircle className="w-5 h-5" />
+                Aplicar ao Mês
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+          <div className="lg:col-span-1">
+            <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-purple-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-purple-500/20 lg:sticky lg:top-6">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-purple-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
+                <PlusCircle className="text-purple-400 w-7 h-7 md:w-9 md:h-9" />
+                Novo Gasto Fixo
+              </h2>
+              <div className="space-y-4 md:space-y-5 lg:space-y-6">
+                <div>
+                  <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-purple-300 flex items-center gap-2 uppercase tracking-wide">
+                    <span className="text-base md:text-xl">📝</span> Descrição
+                  </label>
+                  <input
+                    type="text"
+                    value={novoGastoFixo.descricao}
+                    onChange={(e) => setNovoGastoFixo({...novoGastoFixo, descricao: e.target.value})}
+                    placeholder="Ex: Aluguel, Internet..."
+                    className="w-full bg-black/70 border-2 border-purple-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-purple-400 font-medium focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all placeholder-gray-600 text-sm md:text-base"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-purple-300 flex items-center gap-2 uppercase tracking-wide">
+                    <span className="text-base md:text-xl">🏷️</span> Categoria
+                  </label>
+                  <select
+                    value={novoGastoFixo.categoria}
+                    onChange={(e) => setNovoGastoFixo({...novoGastoFixo, categoria: e.target.value})}
+                    className="w-full bg-black/70 border-2 border-purple-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-purple-400 font-black text-base md:text-lg focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all"
+                  >
+                    {categorias.map(cat => (
+                      <option key={cat.key} value={cat.key}>{cat.icone} {cat.label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-purple-300 flex items-center gap-2 uppercase tracking-wide">
+                    <span className="text-base md:text-xl">📅</span> Dia de Vencimento
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={novoGastoFixo.diaVencimento}
+                    onChange={(e) => setNovoGastoFixo({...novoGastoFixo, diaVencimento: parseInt(e.target.value)})}
+                    className="w-full bg-black/70 border-2 border-purple-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 text-purple-400 font-black text-base md:text-lg focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-purple-300 flex items-center gap-2 uppercase tracking-wide">
+                    <span className="text-base md:text-xl">💰</span> Valor (R$)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={novoGastoFixo.valor}
+                    onChange={(e) => setNovoGastoFixo({...novoGastoFixo, valor: e.target.value})}
+                    placeholder="0,00"
+                    className="w-full bg-black/70 border-2 border-purple-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-3 md:py-4 lg:py-5 text-purple-400 text-xl md:text-2xl lg:text-3xl font-black focus:outline-none focus:border-purple-400 focus:ring-4 focus:ring-purple-400/30 transition-all placeholder-gray-700"
+                  />
+                </div>
+                <button
+                  onClick={adicionarGastoFixo}
+                  className="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-500 hover:to-purple-600 text-white font-black py-3 md:py-4 lg:py-5 rounded-xl md:rounded-2xl transition-all duration-300 text-base md:text-lg lg:text-xl shadow-2xl shadow-purple-500/50 hover:scale-105 hover:shadow-3xl hover:shadow-purple-500/60 flex items-center justify-center gap-2 md:gap-3"
+                >
+                  <PlusCircle className="w-6 h-6 md:w-7 md:h-7" />
+                  Adicionar Gasto Fixo
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="lg:col-span-2">
+            <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-purple-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-purple-500/10">
+              <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-purple-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
+                <Repeat className="text-purple-400 w-7 h-7 md:w-9 md:h-9" />
+                Meus Gastos Fixos
+              </h2>
+              {gastosFixos.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 md:py-24 lg:py-32 text-gray-500">
+                  <div className="text-6xl md:text-7xl lg:text-9xl mb-4 md:mb-6 lg:mb-8 opacity-20">🔄</div>
+                  <p className="text-xl md:text-2xl lg:text-3xl mb-2 md:mb-3 font-black">Nenhum gasto fixo cadastrado</p>
+                  <p className="text-xs md:text-sm lg:text-base text-gray-600">Adicione seus gastos recorrentes ao lado</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {gastosFixos.map(gf => {
+                    const cat = categorias.find(c => c.key === gf.categoria);
+                    const isPago = gf.statusMes[mesAno] === 'pago';
+                    
+                    return (
+                      <div key={gf.id} className={`bg-black/50 rounded-xl md:rounded-2xl p-4 md:p-5 border-2 transition-all duration-300 hover:scale-[1.02] ${isPago ? 'border-green-500/50' : 'border-orange-500/50'}`}>
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-start gap-3 mb-3">
+                              <span className="text-3xl md:text-4xl">{cat.icone}</span>
+                              <div className="flex-1">
+                                <h3 className="text-lg md:text-xl font-black text-purple-400 mb-1">{gf.descricao}</h3>
+                                <div className="flex flex-wrap gap-2 text-xs md:text-sm">
+                                  <span className="px-2 py-1 rounded-lg font-bold" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `1px solid ${cat.cor}40` }}>
+                                    {cat.label}
+                                  </span>
+                                  <span className="px-2 py-1 bg-gray-800 text-gray-400 rounded-lg font-bold border border-gray-700">
+                                    📅 Dia {gf.diaVencimento}
+                                  </span>
+                                  <span className={`px-2 py-1 rounded-lg font-bold ${isPago ? 'bg-green-500/20 text-green-400 border border-green-500/40' : 'bg-orange-500/20 text-orange-400 border border-orange-500/40'}`}>
+                                    {isPago ? '✅ Pago' : '⏳ Pendente'}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="text-2xl md:text-3xl font-black text-purple-400 ml-12">
+                              R$ {gf.valor.toFixed(2)}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 md:flex-col md:gap-3">
+                            <button
+                              onClick={() => toggleStatusGastoFixo(gf.id)}
+                              className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold transition-all duration-300 hover:scale-105 text-sm ${
+                                isPago 
+                                  ? 'bg-orange-600 hover:bg-orange-500 text-white' 
+                                  : 'bg-green-600 hover:bg-green-500 text-white'
+                              }`}
+                            >
+                              {isPago ? '↩️ Pendente' : '✅ Marcar Pago'}
+                            </button>
+                            <button
+                              onClick={() => removerGastoFixo(gf.id)}
+                              className="flex-1 md:flex-none bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 hover:scale-105 text-sm"
+                            >
+                              🗑️ Excluir
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderRegistro = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
@@ -1035,6 +1314,7 @@ export default function ControleFinanceiro() {
         {paginaAtual === 'orcamento' && renderOrcamento()}
         {paginaAtual === 'dashboard' && renderDashboard()}
         {paginaAtual === 'registro' && renderRegistro()}
+        {paginaAtual === 'gastosfixos' && renderGastosFixos()}
         {paginaAtual === 'analises' && renderAnalises()}
         {paginaAtual === 'relatorios' && renderRelatorios()}
       </div>
