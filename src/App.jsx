@@ -5,19 +5,11 @@ import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircl
 export default function ControleFinanceiro() {
   const [paginaAtual, setPaginaAtual] = useState('orcamento');
   const [menuAberto, setMenuAberto] = useState(false);
-  const [salario, setSalario] = useState('');
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  const [orcamentos, setOrcamentos] = useState({
-    moradia: '',
-    alimentacao: '',
-    transporte: '',
-    lazer: '',
-    saude: '',
-    educacao: '',
-    comprasFixas: '',
-    outros: ''
-  });
+  // ALTERAÇÃO: Salários e Orçamentos agora são independentes por mês/ano
+  const [salariosPorMes, setSalariosPorMes] = useState({});
+  const [orcamentosPorMes, setOrcamentosPorMes] = useState({});
   const [gastosDiarios, setGastosDiarios] = useState([]);
   const [gastosFixos, setGastosFixos] = useState([]);
   const [novoGasto, setNovoGasto] = useState({
@@ -48,6 +40,53 @@ export default function ControleFinanceiro() {
     { key: 'outros', label: 'Outros', icone: '💼', cor: '#64748b', corEscura: '#334155' }
   ];
 
+
+  // Função para obter chave do mês/ano
+  const getChaveMesAno = (mes, ano) => `${mes}-${ano}`;
+
+  // Função para obter salário do mês atual
+  const getSalarioMesAtual = () => {
+    const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
+    return salariosPorMes[chave] || '';
+  };
+
+  // Função para atualizar salário do mês atual
+  const atualizarSalarioMesAtual = (novoSalario) => {
+    const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
+    setSalariosPorMes({
+      ...salariosPorMes,
+      [chave]: novoSalario
+    });
+  };
+
+  // Função para obter orçamento do mês atual
+  const getOrcamentoMesAtual = () => {
+    const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
+    return orcamentosPorMes[chave] || {
+      moradia: '',
+      alimentacao: '',
+      transporte: '',
+      lazer: '',
+      saude: '',
+      educacao: '',
+      comprasFixas: '',
+      outros: ''
+    };
+  };
+
+  // Função para atualizar orçamento do mês atual
+  const atualizarOrcamentoMesAtual = (novoOrcamento) => {
+    const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
+    setOrcamentosPorMes({
+      ...orcamentosPorMes,
+      [chave]: novoOrcamento
+    });
+  };
+
+  // Obter salário e orçamento do mês selecionado
+  const salario = getSalarioMesAtual();
+  const orcamentos = getOrcamentoMesAtual();
+
   const menuItems = [
     { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
     { id: 'dashboard', label: 'Dashboard', icon: Home },
@@ -62,10 +101,30 @@ export default function ControleFinanceiro() {
     if (dadosSalvos) {
       try {
         const dados = JSON.parse(dadosSalvos);
-        setSalario(dados.salario || '');
         setMesSelecionado(dados.mesSelecionado || new Date().getMonth());
         setAnoSelecionado(dados.anoSelecionado || new Date().getFullYear());
-        setOrcamentos(dados.orcamentos || {});
+        
+        // Migração de dados: carregar salários por mês ou migrar dados antigos
+        if (dados.salariosPorMes) {
+          setSalariosPorMes(dados.salariosPorMes);
+        } else if (dados.salario) {
+          // Migrar dados antigos: colocar salário antigo no mês salvo
+          const chave = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
+          setSalariosPorMes({
+            [chave]: dados.salario
+          });
+        }
+        
+        // Migração de dados: carregar orçamentos por mês ou migrar dados antigos
+        if (dados.orcamentosPorMes) {
+          setOrcamentosPorMes(dados.orcamentosPorMes);
+        } else if (dados.orcamentos) {
+          // Migrar dados antigos: colocar orçamento antigo no mês salvo
+          const chave = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
+          setOrcamentosPorMes({
+            [chave]: dados.orcamentos
+          });
+        }
         
         // Migração de dados: adicionar mes e ano aos gastos antigos
         const gastosComMesAno = (dados.gastosDiarios || []).map(g => {
@@ -89,21 +148,21 @@ export default function ControleFinanceiro() {
 
   useEffect(() => {
     const dados = {
-      salario,
       mesSelecionado,
       anoSelecionado,
-      orcamentos,
+      salariosPorMes, // Agora salvamos todos os salários
+      orcamentosPorMes, // Agora salvamos todos os orçamentos
       gastosDiarios,
       gastosFixos,
       ultimaAtualizacao: new Date().toISOString()
     };
     localStorage.setItem('controleFinanceiro', JSON.stringify(dados));
     
-    if (salario || gastosDiarios.length > 0 || gastosFixos.length > 0) {
+    if (Object.keys(salariosPorMes).length > 0 || gastosDiarios.length > 0 || gastosFixos.length > 0) {
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
     }
-  }, [salario, mesSelecionado, anoSelecionado, orcamentos, gastosDiarios, gastosFixos]);
+  }, [mesSelecionado, anoSelecionado, salariosPorMes, orcamentosPorMes, gastosDiarios, gastosFixos]);
 
   const adicionarGasto = () => {
     if (novoGasto.valor && parseFloat(novoGasto.valor) > 0) {
@@ -953,7 +1012,7 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Orçamento Mensal
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e planeje (valores fixos para todos os meses)</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e orçamento independente para cada mês</p>
         </div>
       </div>
 
@@ -962,7 +1021,7 @@ export default function ControleFinanceiro() {
           <DollarSign className="text-cyan-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
           <div>
             <p className="text-cyan-300 text-xs md:text-sm font-bold">
-              ℹ️ Seu salário e orçamento são valores padrão aplicados a todos os meses. Use "Período" apenas para visualizar os gastos específicos de cada mês.
+ℹ️ Cada mês pode ter seu próprio salário e orçamento independentes. Ao mudar o mês/ano, você pode definir valores diferentes.
             </p>
           </div>
         </div>
@@ -980,7 +1039,7 @@ export default function ControleFinanceiro() {
               <input
                 type="number"
                 value={salario}
-                onChange={(e) => setSalario(e.target.value)}
+                onChange={(e) => atualizarSalarioMesAtual(e.target.value)}
                 placeholder="Digite seu salário"
                 className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-5 lg:px-6 py-3 md:py-4 lg:py-5 text-green-400 text-xl md:text-2xl lg:text-3xl font-black focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
               />
@@ -1047,7 +1106,7 @@ export default function ControleFinanceiro() {
               <input
                 type="number"
                 value={orcamentos[cat.key]}
-                onChange={(e) => setOrcamentos({...orcamentos, [cat.key]: e.target.value})}
+                onChange={(e) => atualizarOrcamentoMesAtual({...orcamentos, [cat.key]: e.target.value})}
                 placeholder="R$ 0,00"
                 className="w-full bg-gray-900/70 border-2 rounded-xl px-3 md:px-4 py-3 md:py-4 text-green-400 font-bold text-base md:text-lg focus:outline-none focus:ring-2 transition-all"
                 style={{ borderColor: cat.cor, '--tw-ring-color': cat.cor }}
