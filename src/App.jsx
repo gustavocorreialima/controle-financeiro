@@ -347,7 +347,7 @@ export default function ControleFinanceiro() {
                   <div className="flex justify-between items-center mb-3 md:mb-4">
                     <span className="font-black flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg" style={{ color: cat.cor }}>
                       <span className="text-xl md:text-2xl lg:text-3xl">{cat.icone}</span>
-                      <span className="hidden sm:inline">{cat.label}</span>
+                      {cat.label}
                     </span>
                     <div className="text-right">
                       <div className={`font-black text-sm md:text-base lg:text-lg ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
@@ -406,7 +406,7 @@ export default function ControleFinanceiro() {
                         <td className="p-2 md:p-3 lg:p-4">
                           <span className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 lg:px-4 py-1 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `1px solid ${cat.cor}40` }}>
                             <span className="text-base md:text-lg lg:text-xl">{cat.icone}</span>
-                            <span className="hidden md:inline">{cat.label}</span>
+                            {cat.label}
                           </span>
                         </td>
                         <td className="p-2 md:p-3 lg:p-4 text-gray-400 text-xs md:text-sm hidden sm:table-cell">{gasto.descricao || '-'}</td>
@@ -571,7 +571,7 @@ export default function ControleFinanceiro() {
                             <td className="p-2 md:p-3 lg:p-5">
                               <span className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 lg:px-4 py-1 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `2px solid ${cat.cor}40` }}>
                                 <span className="text-base md:text-lg lg:text-xl">{cat.icone}</span>
-                                <span className="hidden sm:inline">{cat.label}</span>
+                                {cat.label}
                               </span>
                             </td>
                             <td className="p-2 md:p-3 lg:p-5 text-gray-400 font-medium text-xs md:text-sm hidden md:table-cell">{gasto.descricao || '-'}</td>
@@ -692,7 +692,7 @@ export default function ControleFinanceiro() {
             <div key={cat.key} className="bg-black/50 rounded-xl md:rounded-2xl p-4 md:p-5 lg:p-6 border-l-4 hover:bg-black/70 transition-all duration-300 hover:scale-105 shadow-lg" style={{ borderColor: cat.cor }}>
               <label className="block font-black mb-3 md:mb-4 text-base md:text-lg lg:text-xl flex items-center gap-2 md:gap-3" style={{ color: cat.cor }}>
                 <span className="text-2xl md:text-2xl lg:text-3xl">{cat.icone}</span>
-                <span className="hidden sm:inline">{cat.label}</span>
+                {cat.label}
               </label>
               <input
                 type="number"
@@ -738,7 +738,7 @@ export default function ControleFinanceiro() {
               <div className="flex items-center justify-between mb-4 md:mb-5 lg:mb-6">
                 <h2 className="text-2xl md:text-3xl lg:text-4xl font-black flex items-center gap-2 md:gap-3 lg:gap-4" style={{ color: cat.cor }}>
                   <span className="text-3xl md:text-4xl lg:text-5xl">{cat.icone}</span>
-                  <span className="hidden sm:inline">{cat.label}</span>
+                  {cat.label}
                 </h2>
                 <div className="text-right">
                   <div className={`text-3xl md:text-4xl lg:text-5xl font-black ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
@@ -925,7 +925,7 @@ export default function ControleFinanceiro() {
                       <td className="p-1.5 md:p-3 lg:p-5">
                         <span className="font-black flex items-center gap-1.5 md:gap-3 text-xs md:text-base lg:text-lg whitespace-nowrap" style={{ color: cat.cor }}>
                           <span className="text-base md:text-xl lg:text-2xl">{cat.icone}</span>
-                          <span className="hidden sm:inline">{cat.label}</span>
+                          {cat.label}
                         </span>
                       </td>
                       <td className="p-1.5 md:p-3 lg:p-5 text-right text-blue-400 font-bold text-[10px] md:text-sm lg:text-lg whitespace-nowrap">R$ {orcamento.toFixed(2)}</td>
