@@ -5,19 +5,10 @@ import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircl
 export default function ControleFinanceiro() {
   const [paginaAtual, setPaginaAtual] = useState('orcamento');
   const [menuAberto, setMenuAberto] = useState(false);
-  const [salario, setSalario] = useState('');
+  const [salarios, setSalarios] = useState({}); // Agora é um objeto: {'mes-ano': valor}
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  const [orcamentos, setOrcamentos] = useState({
-    moradia: '',
-    alimentacao: '',
-    transporte: '',
-    lazer: '',
-    saude: '',
-    educacao: '',
-    comprasFixas: '',
-    outros: ''
-  });
+  const [orcamentosPorMes, setOrcamentosPorMes] = useState({}); // Agora é: {'mes-ano': {moradia: '', alimentacao: '', ...}}
   const [gastosDiarios, setGastosDiarios] = useState([]);
   const [gastosFixos, setGastosFixos] = useState([]);
   const [novoGasto, setNovoGasto] = useState({
@@ -32,7 +23,69 @@ export default function ControleFinanceiro() {
     categoria: 'comprasFixas',
     diaVencimento: 1
   });
-  const [mostrarSalvo, setMostrarSalvo] = useState(false);
+  // Função para copiar orçamento de outro mês
+  const [mostrarCopiarOrcamento, setMostrarCopiarOrcamento] = useState(false);
+  
+  const copiarOrcamentoDeOutroMes = (mesOrigem, anoOrigem) => {
+    const chaveOrigem = `${mesOrigem}-${anoOrigem}`;
+    const orcamentoOrigem = orcamentosPorMes[chaveOrigem];
+    const salarioOrigem = salarios[chaveOrigem];
+    
+    if (orcamentoOrigem || salarioOrigem) {
+      if (salarioOrigem) {
+        setSalarios({
+          ...salarios,
+          [mesAnoAtual]: salarioOrigem
+        });
+      }
+      if (orcamentoOrigem) {
+        setOrcamentosPorMes({
+          ...orcamentosPorMes,
+          [mesAnoAtual]: {...orcamentoOrigem}
+        });
+      }
+      setMostrarCopiarOrcamento(false);
+    }
+  };
+  
+  const mesesComOrcamento = Object.keys(orcamentosPorMes).filter(key => {
+    const orc = orcamentosPorMes[key];
+    return Object.values(orc).some(v => v && parseFloat(v) > 0);
+  });
+
+  // Obter chave do mês atual
+  const mesAnoAtual = `${mesSelecionado}-${anoSelecionado}`;
+  
+  // Obter salário do mês atual
+  const salario = salarios[mesAnoAtual] || '';
+  
+  // Obter orçamentos do mês atual
+  const orcamentos = orcamentosPorMes[mesAnoAtual] || {
+    moradia: '',
+    alimentacao: '',
+    transporte: '',
+    lazer: '',
+    saude: '',
+    educacao: '',
+    comprasFixas: '',
+    outros: ''
+  };
+  
+  // Função para atualizar salário do mês atual
+  const setSalario = (valor) => {
+    setSalarios({
+      ...salarios,
+      [mesAnoAtual]: valor
+    });
+  };
+  
+  // Função para atualizar orçamentos do mês atual
+  const setOrcamentos = (novosOrcamentos) => {
+    setOrcamentosPorMes({
+      ...orcamentosPorMes,
+      [mesAnoAtual]: novosOrcamentos
+    });
+  };
 
   const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -62,10 +115,28 @@ export default function ControleFinanceiro() {
     if (dadosSalvos) {
       try {
         const dados = JSON.parse(dadosSalvos);
-        setSalario(dados.salario || '');
+        
+        // Migração de dados antigos para novo formato
+        if (dados.salario && typeof dados.salario === 'string') {
+          // Formato antigo: converter para novo formato
+          const mesAnoInicial = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
+          setSalarios({ [mesAnoInicial]: dados.salario });
+        } else {
+          // Formato novo
+          setSalarios(dados.salarios || {});
+        }
+        
+        if (dados.orcamentos && !dados.orcamentosPorMes) {
+          // Formato antigo: converter para novo formato
+          const mesAnoInicial = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
+          setOrcamentosPorMes({ [mesAnoInicial]: dados.orcamentos });
+        } else {
+          // Formato novo
+          setOrcamentosPorMes(dados.orcamentosPorMes || {});
+        }
+        
         setMesSelecionado(dados.mesSelecionado || new Date().getMonth());
         setAnoSelecionado(dados.anoSelecionado || new Date().getFullYear());
-        setOrcamentos(dados.orcamentos || {});
         
         // Migração de dados: adicionar mes e ano aos gastos antigos
         const gastosComMesAno = (dados.gastosDiarios || []).map(g => {
@@ -89,21 +160,21 @@ export default function ControleFinanceiro() {
 
   useEffect(() => {
     const dados = {
-      salario,
+      salarios,
       mesSelecionado,
       anoSelecionado,
-      orcamentos,
+      orcamentosPorMes,
       gastosDiarios,
       gastosFixos,
       ultimaAtualizacao: new Date().toISOString()
     };
     localStorage.setItem('controleFinanceiro', JSON.stringify(dados));
     
-    if (salario || gastosDiarios.length > 0 || gastosFixos.length > 0) {
+    if (Object.keys(salarios).length > 0 || gastosDiarios.length > 0 || gastosFixos.length > 0) {
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
     }
-  }, [salario, mesSelecionado, anoSelecionado, orcamentos, gastosDiarios, gastosFixos]);
+  }, [salarios, mesSelecionado, anoSelecionado, orcamentosPorMes, gastosDiarios, gastosFixos]);
 
   const adicionarGasto = () => {
     if (novoGasto.valor && parseFloat(novoGasto.valor) > 0) {
@@ -225,6 +296,17 @@ export default function ControleFinanceiro() {
           <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Período Atual</p>
           <p className="text-green-400 font-black text-lg md:text-xl lg:text-2xl">{meses[mesSelecionado]}</p>
           <p className="text-green-500/70 text-xs md:text-sm font-bold">{anoSelecionado} • {gastosDoMesAtual.length} gasto{gastosDoMesAtual.length !== 1 ? 's' : ''}</p>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-green-900/30 via-green-800/20 to-green-900/30 border-2 border-green-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
+        <div className="flex items-start gap-2 md:gap-3">
+          <Calendar className="text-green-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-green-300 text-xs md:text-sm font-bold">
+              ℹ️ Todos os dados abaixo são específicos de {meses[mesSelecionado]} {anoSelecionado}. Mude o mês na aba "Orçamento" para ver outros períodos.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -953,26 +1035,60 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Orçamento Mensal
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e planeje (valores fixos para todos os meses)</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure o orçamento de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
 
       <div className="bg-gradient-to-br from-cyan-900/30 via-cyan-800/20 to-cyan-900/30 border-2 border-cyan-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
         <div className="flex items-start gap-2 md:gap-3">
           <DollarSign className="text-cyan-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-cyan-300 text-xs md:text-sm font-bold">
-              ℹ️ Seu salário e orçamento são valores padrão aplicados a todos os meses. Use "Período" apenas para visualizar os gastos específicos de cada mês.
+          <div className="flex-1">
+            <p className="text-cyan-300 text-xs md:text-sm font-bold mb-2">
+              ℹ️ Cada mês tem seu próprio salário e orçamento. As mudanças aqui afetam apenas {meses[mesSelecionado]} {anoSelecionado}. Outros meses permanecem inalterados.
             </p>
+            {mesesComOrcamento.length > 0 && mesesComOrcamento[0] !== mesAnoAtual && (
+              <button
+                onClick={() => setMostrarCopiarOrcamento(!mostrarCopiarOrcamento)}
+                className="mt-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 underline transition-colors"
+              >
+                📋 Copiar orçamento de outro mês
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {mostrarCopiarOrcamento && mesesComOrcamento.length > 0 && (
+        <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-cyan-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl">
+          <h3 className="text-lg md:text-xl font-black text-cyan-400 mb-3 md:mb-4">Copiar Orçamento de:</h3>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+            {mesesComOrcamento.filter(key => key !== mesAnoAtual).map(key => {
+              const [mes, ano] = key.split('-').map(Number);
+              return (
+                <button
+                  key={key}
+                  onClick={() => copiarOrcamentoDeOutroMes(mes, ano)}
+                  className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 md:py-3 px-3 md:px-4 rounded-lg md:rounded-xl transition-all duration-300 hover:scale-105 text-xs md:text-sm"
+                >
+                  {meses[mes]} {ano}
+                </button>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => setMostrarCopiarOrcamento(false)}
+            className="mt-3 md:mt-4 w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg text-sm"
+          >
+            Cancelar
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
             <span className="text-2xl md:text-3xl lg:text-4xl">⚙️</span>
-            Configurações
+            Configurações de {meses[mesSelecionado]}
           </h2>
           <div className="space-y-4 md:space-y-5 lg:space-y-6">
             <div>
@@ -1011,7 +1127,7 @@ export default function ControleFinanceiro() {
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
           <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
             <span className="text-2xl md:text-3xl lg:text-4xl">📊</span>
-            Resumo
+            Resumo de {meses[mesSelecionado]}
           </h2>
           <div className="space-y-3 md:space-y-4">
             <div className="flex justify-between items-center p-4 md:p-5 lg:p-6 bg-gradient-to-r from-green-900/50 to-green-800/30 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-lg">
