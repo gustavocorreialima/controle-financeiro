@@ -3,7 +3,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircle, CheckCircle, TrendingDown, Save } from 'lucide-react';
 
 export default function ControleFinanceiro() {
-  const [paginaAtual, setPaginaAtual] = useState('dashboard');
+  const [paginaAtual, setPaginaAtual] = useState('orcamento');
   const [menuAberto, setMenuAberto] = useState(false);
   const [salario, setSalario] = useState('');
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
@@ -42,9 +42,9 @@ export default function ControleFinanceiro() {
   ];
 
   const menuItems = [
+    { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'registro', label: 'Registrar', icon: PlusCircle },
-    { id: 'orcamento', label: 'Orçamento', icon: DollarSign },
     { id: 'analises', label: 'Análises', icon: TrendingUp },
     { id: 'relatorios', label: 'Relatórios', icon: FileText }
   ];
@@ -1032,9 +1032,9 @@ export default function ControleFinanceiro() {
       </button>
 
       <div className="flex-1 p-4 md:p-6 lg:p-8 lg:p-10 overflow-y-auto custom-scrollbar pt-16 lg:pt-8">
+        {paginaAtual === 'orcamento' && renderOrcamento()}
         {paginaAtual === 'dashboard' && renderDashboard()}
         {paginaAtual === 'registro' && renderRegistro()}
-        {paginaAtual === 'orcamento' && renderOrcamento()}
         {paginaAtual === 'analises' && renderAnalises()}
         {paginaAtual === 'relatorios' && renderRelatorios()}
       </div>
