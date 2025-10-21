@@ -66,7 +66,20 @@ export default function ControleFinanceiro() {
         setMesSelecionado(dados.mesSelecionado || new Date().getMonth());
         setAnoSelecionado(dados.anoSelecionado || new Date().getFullYear());
         setOrcamentos(dados.orcamentos || {});
-        setGastosDiarios(dados.gastosDiarios || []);
+        
+        // Migração de dados: adicionar mes e ano aos gastos antigos
+        const gastosComMesAno = (dados.gastosDiarios || []).map(g => {
+          if (g.mes === undefined || g.ano === undefined) {
+            return {
+              ...g,
+              mes: dados.mesSelecionado || new Date().getMonth(),
+              ano: dados.anoSelecionado || new Date().getFullYear()
+            };
+          }
+          return g;
+        });
+        
+        setGastosDiarios(gastosComMesAno);
         setGastosFixos(dados.gastosFixos || []);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
@@ -97,7 +110,9 @@ export default function ControleFinanceiro() {
       setGastosDiarios([...gastosDiarios, {
         ...novoGasto,
         id: Date.now(),
-        valor: parseFloat(novoGasto.valor)
+        valor: parseFloat(novoGasto.valor),
+        mes: mesSelecionado,
+        ano: anoSelecionado
       }]);
       setNovoGasto({
         dia: new Date().getDate(),
@@ -155,7 +170,9 @@ export default function ControleFinanceiro() {
       dia: gf.diaVencimento,
       categoria: gf.categoria,
       descricao: gf.descricao + ' (Fixo)',
-      valor: gf.valor
+      valor: gf.valor,
+      mes: mesSelecionado,
+      ano: anoSelecionado
     }));
     setGastosDiarios([...gastosDiarios, ...novosGastos]);
     
@@ -166,10 +183,13 @@ export default function ControleFinanceiro() {
     })));
   };
 
+  // Filtrar gastos diários apenas do mês/ano selecionado
+  const gastosDoMesAtual = gastosDiarios.filter(g => g.mes === mesSelecionado && g.ano === anoSelecionado);
+
   const calcularGastosPorCategoria = () => {
     const gastos = {};
     categorias.forEach(cat => {
-      gastos[cat.key] = gastosDiarios
+      gastos[cat.key] = gastosDoMesAtual
         .filter(g => g.categoria === cat.key)
         .reduce((acc, g) => acc + g.valor, 0);
     });
@@ -196,7 +216,7 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Dashboard
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Controle total das suas finanças</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Controle total das finanças de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
       
@@ -204,7 +224,7 @@ export default function ControleFinanceiro() {
         <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-2xl shadow-green-500/20 ml-auto">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Período Atual</p>
           <p className="text-green-400 font-black text-lg md:text-xl lg:text-2xl">{meses[mesSelecionado]}</p>
-          <p className="text-green-500/70 text-xs md:text-sm font-bold">{anoSelecionado}</p>
+          <p className="text-green-500/70 text-xs md:text-sm font-bold">{anoSelecionado} • {gastosDoMesAtual.length} gasto{gastosDoMesAtual.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
 
@@ -458,7 +478,7 @@ export default function ControleFinanceiro() {
           <span className="hidden sm:inline">Últimos Gastos Registrados</span>
           <span className="sm:hidden">Últimos Gastos</span>
         </h2>
-        {gastosDiarios.length > 0 ? (
+        {gastosDoMesAtual.length > 0 ? (
           <div className="overflow-x-auto -mx-4 md:mx-0">
             <div className="inline-block min-w-full align-middle px-4 md:px-0">
               <table className="w-full">
@@ -471,7 +491,7 @@ export default function ControleFinanceiro() {
                   </tr>
                 </thead>
                 <tbody>
-                  {gastosDiarios.slice(-8).reverse().map(gasto => {
+                  {gastosDoMesAtual.slice(-8).reverse().map(gasto => {
                     const cat = categorias.find(c => c.key === gasto.categoria);
                     return (
                       <tr key={gasto.id} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
@@ -533,7 +553,18 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Registrar Gastos
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Adicione seus gastos diários</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Adicione seus gastos diários de {meses[mesSelecionado]} {anoSelecionado}</p>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-blue-900/30 via-blue-800/20 to-blue-900/30 border-2 border-blue-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
+        <div className="flex items-start gap-2 md:gap-3">
+          <AlertCircle className="text-blue-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-blue-300 text-xs md:text-sm font-bold">
+              ℹ️ Os gastos são salvos por mês. Ao mudar o mês, você verá apenas os gastos específicos daquele período.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -616,13 +647,13 @@ export default function ControleFinanceiro() {
                 <span className="hidden sm:inline">Gastos de {meses[mesSelecionado]} {anoSelecionado}</span>
                 <span className="sm:hidden">{meses[mesSelecionado]}/{anoSelecionado}</span>
               </h2>
-              {gastosDiarios.length > 0 && (
+              {gastosDoMesAtual.length > 0 && (
                 <div className="bg-green-500/20 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-green-500/30">
-                  <p className="text-green-400 font-black text-sm md:text-base lg:text-lg">{gastosDiarios.length} gasto{gastosDiarios.length > 1 ? 's' : ''}</p>
+                  <p className="text-green-400 font-black text-sm md:text-base lg:text-lg">{gastosDoMesAtual.length} gasto{gastosDoMesAtual.length > 1 ? 's' : ''}</p>
                 </div>
               )}
             </div>
-            {gastosDiarios.length === 0 ? (
+            {gastosDoMesAtual.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 md:py-24 lg:py-32 text-gray-500">
                 <div className="text-6xl md:text-7xl lg:text-9xl mb-4 md:mb-6 lg:mb-8 opacity-20">📊</div>
                 <p className="text-xl md:text-2xl lg:text-3xl mb-2 md:mb-3 font-black">Nenhum gasto registrado</p>
@@ -642,7 +673,7 @@ export default function ControleFinanceiro() {
                       </tr>
                     </thead>
                     <tbody>
-                      {gastosDiarios.sort((a, b) => b.dia - a.dia).map((gasto, index) => {
+                      {gastosDoMesAtual.sort((a, b) => b.dia - a.dia).map((gasto, index) => {
                         const cat = categorias.find(c => c.key === gasto.categoria);
                         return (
                           <tr key={gasto.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition-all ${index % 2 === 0 ? 'bg-black/20' : ''}`}>
@@ -922,7 +953,18 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Orçamento Mensal
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e planeje</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e planeje (valores fixos para todos os meses)</p>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-cyan-900/30 via-cyan-800/20 to-cyan-900/30 border-2 border-cyan-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
+        <div className="flex items-start gap-2 md:gap-3">
+          <DollarSign className="text-cyan-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-cyan-300 text-xs md:text-sm font-bold">
+              ℹ️ Seu salário e orçamento são valores padrão aplicados a todos os meses. Use "Período" apenas para visualizar os gastos específicos de cada mês.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -1035,7 +1077,7 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Análises Detalhadas
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Desempenho de cada categoria</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Desempenho de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
 
@@ -1045,7 +1087,7 @@ export default function ControleFinanceiro() {
           const gasto = gastosReais[cat.key] || 0;
           const restante = orcamento - gasto;
           const percentual = orcamento > 0 ? (gasto / orcamento * 100) : 0;
-          const gastosCategoria = gastosDiarios.filter(g => g.categoria === cat.key);
+          const gastosCategoria = gastosDoMesAtual.filter(g => g.categoria === cat.key);
 
           if (orcamento === 0 && gasto === 0) return null;
 
@@ -1165,7 +1207,7 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Relatórios
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Comparações e estatísticas</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Dados de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
 
