@@ -979,12 +979,6 @@ export default function ControleFinanceiro() {
             </h2>
             <p className="text-xs text-gray-500 mt-1 font-semibold">Salvamento Automático</p>
           </div>
-          <button 
-            onClick={() => setMenuAberto(false)}
-            className="lg:hidden text-green-400 hover:text-green-300 hover:scale-110 transition-all duration-300 p-2 rounded-lg hover:bg-green-500/20"
-          >
-            <Menu size={28} />
-          </button>
         </div>
         
         <nav className="flex-1 p-4 md:p-5 space-y-2 md:space-y-3 overflow-y-auto custom-scrollbar">
@@ -1021,15 +1015,6 @@ export default function ControleFinanceiro() {
         </div>
       </div>
 
-      {!menuAberto && (
-        <button
-          onClick={() => setMenuAberto(true)}
-          className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all"
-        >
-          <Menu size={24} />
-        </button>
-      )}
-
       {menuAberto && (
         <div 
           className="fixed inset-0 bg-black/50 z-30 lg:hidden"
@@ -1039,9 +1024,11 @@ export default function ControleFinanceiro() {
 
       <button
         onClick={() => setMenuAberto(!menuAberto)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all"
+        className={`lg:hidden fixed top-4 z-50 bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 ${
+          menuAberto ? 'right-4' : 'left-4'
+        }`}
       >
-        <Menu size={24} />
+        {menuAberto ? <X size={24} /> : <Menu size={24} />}
       </button>
 
       <div className="flex-1 p-4 md:p-6 lg:p-8 lg:p-10 overflow-y-auto custom-scrollbar pt-16 lg:pt-8">
