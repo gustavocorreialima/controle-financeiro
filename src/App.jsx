@@ -276,7 +276,7 @@ export default function ControleFinanceiro() {
       <div className="flex items-center gap-3 md:gap-4 mb-4">
         <button
           onClick={() => setMenuAberto(!menuAberto)}
-          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
         >
           {menuAberto ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -613,7 +613,7 @@ export default function ControleFinanceiro() {
       <div className="flex items-center gap-3 md:gap-4 mb-4">
         <button
           onClick={() => setMenuAberto(!menuAberto)}
-          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
         >
           {menuAberto ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -796,7 +796,7 @@ export default function ControleFinanceiro() {
         <div className="flex items-center gap-3 md:gap-4 mb-4">
           <button
             onClick={() => setMenuAberto(!menuAberto)}
-            className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+            className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
           >
             {menuAberto ? <X size={24} /> : <Menu size={24} />}
           </button>
@@ -1013,7 +1013,7 @@ export default function ControleFinanceiro() {
       <div className="flex items-center gap-3 md:gap-4 mb-4">
         <button
           onClick={() => setMenuAberto(!menuAberto)}
-          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
         >
           {menuAberto ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -1137,7 +1137,7 @@ export default function ControleFinanceiro() {
       <div className="flex items-center gap-3 md:gap-4 mb-4">
         <button
           onClick={() => setMenuAberto(!menuAberto)}
-          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
         >
           {menuAberto ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -1267,7 +1267,7 @@ export default function ControleFinanceiro() {
       <div className="flex items-center gap-3 md:gap-4 mb-4">
         <button
           onClick={() => setMenuAberto(!menuAberto)}
-          className="lg:hidden bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
         >
           {menuAberto ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -1405,7 +1405,7 @@ export default function ControleFinanceiro() {
         </div>
       )}
 
-      <div className={`${menuAberto ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 fixed lg:static inset-y-0 left-0 z-40 w-64 md:w-72 lg:w-80 bg-gradient-to-b from-gray-900 via-gray-900 to-black border-r-2 border-green-500/30 transition-transform duration-300 flex flex-col shadow-2xl shadow-green-500/10`}>
+      <div className={`${menuAberto ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-40 w-64 md:w-72 lg:w-80 bg-gradient-to-b from-gray-900 via-gray-900 to-black border-r-2 border-green-500/30 transition-transform duration-300 flex flex-col shadow-2xl shadow-green-500/10`}>
         <div className="p-4 md:p-5 lg:p-6 border-b-2 border-green-500/30 flex items-center justify-between bg-black/50">
           <div>
             <h2 className="text-2xl md:text-3xl font-black bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent">
@@ -1413,6 +1413,12 @@ export default function ControleFinanceiro() {
             </h2>
             <p className="text-xs text-gray-500 mt-1 font-semibold">Salvamento Automático</p>
           </div>
+          <button
+            onClick={() => setMenuAberto(false)}
+            className="text-green-400 hover:text-green-300 transition-all hover:scale-110 p-2 hover:bg-green-500/10 rounded-lg"
+          >
+            <X className="w-6 h-6 md:w-7 md:h-7" />
+          </button>
         </div>
         
         <nav className="flex-1 p-4 md:p-5 space-y-2 md:space-y-3 overflow-y-auto custom-scrollbar">
@@ -1424,7 +1430,7 @@ export default function ControleFinanceiro() {
                 key={item.id}
                 onClick={() => {
                   setPaginaAtual(item.id);
-                  if (window.innerWidth < 1024) setMenuAberto(false);
+                  setMenuAberto(false);
                 }}
                 className={`w-full flex items-center gap-3 md:gap-4 p-4 md:p-5 rounded-xl md:rounded-2xl transition-all duration-300 ${
                   ativo
@@ -1451,7 +1457,7 @@ export default function ControleFinanceiro() {
 
       {menuAberto && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setMenuAberto(false)}
         />
       )}
