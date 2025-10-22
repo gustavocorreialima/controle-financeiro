@@ -194,10 +194,30 @@ export default function ControleFinanceiro() {
   const calcularFaturaCartao = (cartaoId) => {
     const gastos = gastosCartao.filter(g => {
       if (g.cartaoId !== cartaoId) return false;
-      const dataGasto = new Date(g.data);
-      return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+      
+      // Garantir que a data está no formato correto
+      const dataGasto = new Date(g.data + 'T00:00:00');
+      const mesGasto = dataGasto.getMonth();
+      const anoGasto = dataGasto.getFullYear();
+      
+      // Debug: mostrar os gastos sendo filtrados
+      console.log('Verificando gasto:', {
+        descricao: g.descricao,
+        valor: g.valor,
+        data: g.data,
+        mesGasto,
+        anoGasto,
+        mesSelecionado,
+        anoSelecionado,
+        match: mesGasto === mesSelecionado && anoGasto === anoSelecionado
+      });
+      
+      return mesGasto === mesSelecionado && anoGasto === anoSelecionado;
     });
-    return gastos.reduce((total, g) => total + (parseFloat(g.valor) || 0), 0);
+    
+    const total = gastos.reduce((total, g) => total + (parseFloat(g.valor) || 0), 0);
+    console.log('Total da fatura para cartão', cartaoId, ':', total, 'gastos:', gastos.length);
+    return total;
   };
 
   const calcularStatusCartao = (cartao) => {
@@ -336,8 +356,14 @@ export default function ControleFinanceiro() {
     const gastos = [];
 
     for (let i = 0; i < parseInt(novoGastoCartao.parcelas); i++) {
-      const dataGasto = new Date(novoGastoCartao.data);
+      const dataGasto = new Date(novoGastoCartao.data + 'T00:00:00');
       dataGasto.setMonth(dataGasto.getMonth() + i);
+      
+      // Formatar a data corretamente (YYYY-MM-DD)
+      const ano = dataGasto.getFullYear();
+      const mes = String(dataGasto.getMonth() + 1).padStart(2, '0');
+      const dia = String(dataGasto.getDate()).padStart(2, '0');
+      const dataFormatada = `${ano}-${mes}-${dia}`;
 
       gastos.push({
         id: Date.now() + i + Math.random(),
@@ -346,14 +372,23 @@ export default function ControleFinanceiro() {
           ? `${novoGastoCartao.descricao} (${i + 1}/${novoGastoCartao.parcelas})`
           : novoGastoCartao.descricao,
         valor: valorParcela,
-        data: dataGasto.toISOString().split('T')[0],
+        data: dataFormatada,
         categoria: novoGastoCartao.categoria,
         parcelas: parseInt(novoGastoCartao.parcelas),
         parcelaAtual: i + 1
       });
+      
+      console.log('Adicionando gasto:', {
+        descricao: gastos[gastos.length - 1].descricao,
+        valor: valorParcela,
+        data: dataFormatada,
+        cartaoId: novoGastoCartao.cartaoId
+      });
     }
 
     setGastosCartao([...gastosCartao, ...gastos]);
+    
+    alert(`${gastos.length} gasto(s) adicionado(s) com sucesso!`);
     
     setNovoGastoCartao({
       cartaoId: '',
