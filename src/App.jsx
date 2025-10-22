@@ -252,6 +252,15 @@ export default function ControleFinanceiro() {
         .filter(g => g.categoria === cat.key)
         .reduce((acc, g) => acc + g.valor, 0);
     });
+    
+    // ADICIONAR: Incluir gastos fixos marcados como pagos no mês atual
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    gastosFixos.forEach(gf => {
+      if (gf.statusMes[mesAno] === 'pago') {
+        gastos[gf.categoria] = (gastos[gf.categoria] || 0) + gf.valor;
+      }
+    });
+    
     return gastos;
   };
 
