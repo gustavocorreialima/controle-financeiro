@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircle, CheckCircle, TrendingDown, Save, Calendar, Repeat } from 'lucide-react';
+import { Home, FileText, DollarSign, TrendingUp, PlusCircle, Menu, X, AlertCircle, CheckCircle, TrendingDown, Save, Calendar, Repeat, CreditCard, Trash2, Edit2 } from 'lucide-react';
 
 export default function ControleFinanceiro() {
   const [paginaAtual, setPaginaAtual] = useState('orcamento');
@@ -25,6 +25,27 @@ export default function ControleFinanceiro() {
     diaVencimento: 1
   });
   const [mostrarSalvo, setMostrarSalvo] = useState(false);
+  // Estados para Cartões de Crédito
+  const [cartoes, setCartoes] = useState([]);
+  const [gastosCartao, setGastosCartao] = useState([]);
+  const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
+  const [modalGastoCartaoAberto, setModalGastoCartaoAberto] = useState(false);
+  const [editandoCartao, setEditandoCartao] = useState(null);
+  const [novoCartao, setNovoCartao] = useState({
+    nome: '',
+    diaVencimento: 1,
+    diaFechamento: 1,
+    limite: ''
+  });
+  const [novoGastoCartao, setNovoGastoCartao] = useState({
+    cartaoId: '',
+    descricao: '',
+    valor: '',
+    data: new Date().toISOString().split('T')[0],
+    categoria: 'outros',
+    parcelas: 1
+  });
+
 
   const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
                  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
@@ -92,6 +113,7 @@ export default function ControleFinanceiro() {
     { id: 'dashboard', label: 'Dashboard', icon: Home },
     { id: 'registro', label: 'Registrar', icon: PlusCircle },
     { id: 'gastosfixos', label: 'Gastos Fixos', icon: Repeat },
+    { id: 'faturacartao', label: 'Fatura Cartão', icon: CreditCard },
     { id: 'analises', label: 'Análises', icon: TrendingUp },
     { id: 'relatorios', label: 'Relatórios', icon: FileText }
   ];
@@ -140,6 +162,8 @@ export default function ControleFinanceiro() {
         
         setGastosDiarios(gastosComMesAno);
         setGastosFixos(dados.gastosFixos || []);
+        setCartoes(dados.cartoes || []);
+        setGastosCartao(dados.gastosCartao || []);
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       }
@@ -162,7 +186,204 @@ export default function ControleFinanceiro() {
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
     }
-  }, [mesSelecionado, anoSelecionado, salariosPorMes, orcamentosPorMes, gastosDiarios, gastosFixos]);
+  }, [mesSelecionado, anoSelecionado, salariosPorMes, orcamentosPorMes, gastosDiarios, gastosFixos, cartoes, gastosCartao]);
+
+  
+  // ==================== FUNÇÕES DE CARTÃO ====================
+  
+  const calcularFaturaCartao = (cartaoId) => {
+    const gastos = gastosCartao.filter(g => {
+      if (g.cartaoId !== cartaoId) return false;
+      const dataGasto = new Date(g.data);
+      return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+    });
+    return gastos.reduce((total, g) => total + (parseFloat(g.valor) || 0), 0);
+  };
+
+  const calcularStatusCartao = (cartao) => {
+    const hoje = new Date();
+    const diaHoje = hoje.getDate();
+    const mesHoje = hoje.getMonth();
+    const anoHoje = hoje.getFullYear();
+    
+    if (mesSelecionado !== mesHoje || anoSelecionado !== anoHoje) {
+      return { status: 'futuro', cor: 'gray', texto: 'Futuro' };
+    }
+    
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    const gastoFixoCartao = gastosFixos.find(gf => gf.cartaoId === cartao.id);
+    
+    if (gastoFixoCartao && gastoFixoCartao.statusMes[mesAno] === 'pago') {
+      return { status: 'pago', cor: 'green', texto: 'Paga' };
+    }
+    
+    if (diaHoje > cartao.diaVencimento) {
+      return { status: 'atrasado', cor: 'red', texto: 'Atrasada' };
+    }
+    
+    if (diaHoje >= cartao.diaVencimento - 5) {
+      return { status: 'proximo', cor: 'yellow', texto: 'Vence em breve' };
+    }
+    
+    return { status: 'pendente', cor: 'blue', texto: 'Pendente' };
+  };
+
+  const adicionarCartao = () => {
+    if (!novoCartao.nome || !novoCartao.limite) {
+      alert('Preencha o nome e limite do cartão!');
+      return;
+    }
+
+    const cartao = {
+      id: Date.now(),
+      nome: novoCartao.nome,
+      diaVencimento: parseInt(novoCartao.diaVencimento),
+      diaFechamento: parseInt(novoCartao.diaFechamento),
+      limite: parseFloat(novoCartao.limite)
+    };
+
+    setCartoes([...cartoes, cartao]);
+    
+    // Adicionar automaticamente aos gastos fixos
+    const gastoFixoCartao = {
+      id: Date.now() + 1,
+      descricao: `Fatura ${novoCartao.nome}`,
+      valor: 0,
+      categoria: 'comprasFixas',
+      diaVencimento: parseInt(novoCartao.diaVencimento),
+      cartaoId: cartao.id,
+      tipo: 'fatura-cartao',
+      statusMes: {}
+    };
+    
+    setGastosFixos([...gastosFixos, gastoFixoCartao]);
+    
+    // Reset form
+    setNovoCartao({
+      nome: '',
+      diaVencimento: 1,
+      diaFechamento: 1,
+      limite: ''
+    });
+    
+    setModalCartaoAberto(false);
+  };
+
+  const editarCartao = (cartao) => {
+    setEditandoCartao(cartao);
+    setNovoCartao({
+      nome: cartao.nome,
+      diaVencimento: cartao.diaVencimento,
+      diaFechamento: cartao.diaFechamento,
+      limite: cartao.limite.toString()
+    });
+    setModalCartaoAberto(true);
+  };
+
+  const salvarEdicaoCartao = () => {
+    if (!novoCartao.nome || !novoCartao.limite) {
+      alert('Preencha o nome e limite do cartão!');
+      return;
+    }
+
+    setCartoes(cartoes.map(c => 
+      c.id === editandoCartao.id 
+        ? {
+            ...c,
+            nome: novoCartao.nome,
+            diaVencimento: parseInt(novoCartao.diaVencimento),
+            diaFechamento: parseInt(novoCartao.diaFechamento),
+            limite: parseFloat(novoCartao.limite)
+          }
+        : c
+    ));
+
+    setGastosFixos(gastosFixos.map(gf =>
+      gf.cartaoId === editandoCartao.id
+        ? {
+            ...gf,
+            descricao: `Fatura ${novoCartao.nome}`,
+            diaVencimento: parseInt(novoCartao.diaVencimento)
+          }
+        : gf
+    ));
+
+    setEditandoCartao(null);
+    setNovoCartao({
+      nome: '',
+      diaVencimento: 1,
+      diaFechamento: 1,
+      limite: ''
+    });
+    setModalCartaoAberto(false);
+  };
+
+  const removerCartao = (cartaoId) => {
+    if (!window.confirm('Tem certeza que deseja remover este cartão? Todos os gastos serão perdidos.')) return;
+    
+    setCartoes(cartoes.filter(c => c.id !== cartaoId));
+    setGastosCartao(gastosCartao.filter(g => g.cartaoId !== cartaoId));
+    setGastosFixos(gastosFixos.filter(gf => gf.cartaoId !== cartaoId));
+  };
+
+  const adicionarGastoNoCartao = () => {
+    if (!novoGastoCartao.cartaoId || !novoGastoCartao.descricao || !novoGastoCartao.valor) {
+      alert('Preencha todos os campos!');
+      return;
+    }
+
+    const valorParcela = parseFloat(novoGastoCartao.valor) / parseInt(novoGastoCartao.parcelas);
+    const gastos = [];
+
+    for (let i = 0; i < parseInt(novoGastoCartao.parcelas); i++) {
+      const dataGasto = new Date(novoGastoCartao.data);
+      dataGasto.setMonth(dataGasto.getMonth() + i);
+
+      gastos.push({
+        id: Date.now() + i + Math.random(),
+        cartaoId: novoGastoCartao.cartaoId,
+        descricao: novoGastoCartao.parcelas > 1 
+          ? `${novoGastoCartao.descricao} (${i + 1}/${novoGastoCartao.parcelas})`
+          : novoGastoCartao.descricao,
+        valor: valorParcela,
+        data: dataGasto.toISOString().split('T')[0],
+        categoria: novoGastoCartao.categoria,
+        parcelas: parseInt(novoGastoCartao.parcelas),
+        parcelaAtual: i + 1
+      });
+    }
+
+    setGastosCartao([...gastosCartao, ...gastos]);
+    
+    setNovoGastoCartao({
+      cartaoId: '',
+      descricao: '',
+      valor: '',
+      data: new Date().toISOString().split('T')[0],
+      categoria: 'outros',
+      parcelas: 1
+    });
+    
+    setModalGastoCartaoAberto(false);
+  };
+
+  const removerGastoCartao = (id) => {
+    setGastosCartao(gastosCartao.filter(g => g.id !== id));
+  };
+
+  const marcarFaturaPaga = (cartaoId) => {
+    const mesAno = `${mesSelecionado}-${anoSelecionado}`;
+    setGastosFixos(gastosFixos.map(gf => {
+      if (gf.cartaoId === cartaoId) {
+        return {
+          ...gf,
+          statusMes: {...gf.statusMes, [mesAno]: 'pago'}
+        };
+      }
+      return gf;
+    }));
+  };
+
 
   const adicionarGasto = () => {
     if (novoGasto.valor && parseFloat(novoGasto.valor) > 0) {
@@ -270,6 +491,404 @@ export default function ControleFinanceiro() {
   const totalGasto = Object.values(gastosReais).reduce((acc, val) => acc + val, 0);
   const saldoRestante = salarioNumerico - totalGasto;
   const economiaPercentual = salarioNumerico > 0 ? ((saldoRestante / salarioNumerico) * 100) : 0;
+
+  
+  const renderFaturaCartao = () => (
+    <div className="space-y-4 md:space-y-6 lg:space-y-8">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
+            💳 Fatura Cartão
+          </h1>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Gerencie seus cartões e faturas</p>
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => {
+            setEditandoCartao(null);
+            setNovoCartao({ nome: '', diaVencimento: 1, diaFechamento: 1, limite: '' });
+            setModalCartaoAberto(true);
+          }}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl flex items-center gap-2 shadow-2xl shadow-green-500/30 transition-all hover:scale-105"
+        >
+          <PlusCircle className="w-5 h-5" />
+          Novo Cartão
+        </button>
+
+        {cartoes.length > 0 && (
+          <button
+            onClick={() => {
+              setNovoGastoCartao({
+                ...novoGastoCartao,
+                cartaoId: cartoes[0].id
+              });
+              setModalGastoCartaoAberto(true);
+            }}
+            className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white font-black px-4 md:px-6 py-2.5 md:py-3 rounded-xl flex items-center gap-2 shadow-2xl shadow-blue-500/30 transition-all hover:scale-105"
+          >
+            <CreditCard className="w-5 h-5" />
+            Adicionar Gasto
+          </button>
+        )}
+      </div>
+
+      {cartoes.length === 0 ? (
+        <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-gray-700 rounded-2xl md:rounded-3xl p-8 md:p-12 text-center shadow-2xl">
+          <CreditCard className="w-16 h-16 md:w-20 md:h-20 text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-400 text-lg md:text-xl font-bold mb-2">Nenhum cartão cadastrado</p>
+          <p className="text-gray-500 text-sm md:text-base">Clique em "Novo Cartão" para começar</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+          {cartoes.map(cartao => {
+            const fatura = calcularFaturaCartao(cartao.id);
+            const status = calcularStatusCartao(cartao);
+            const percentualUtilizado = (fatura / cartao.limite) * 100;
+            const gastosDoCartao = gastosCartao.filter(g => {
+              const dataGasto = new Date(g.data);
+              return g.cartaoId === cartao.id && 
+                     dataGasto.getMonth() === mesSelecionado && 
+                     dataGasto.getFullYear() === anoSelecionado;
+            });
+
+            return (
+              <div key={cartao.id} className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl shadow-green-500/10 hover:scale-[1.02] transition-all">
+                <div className="p-4 md:p-6 lg:p-8 bg-gradient-to-br from-green-900/20 to-emerald-900/10">
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-black text-white mb-1">{cartao.nome}</h3>
+                      <p className="text-sm text-gray-400">
+                        Vencimento: dia <span className="font-bold text-green-400">{cartao.diaVencimento}</span>
+                      </p>
+                      <p className="text-xs text-gray-500">Fechamento: dia {cartao.diaFechamento}</p>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => editarCartao(cartao)}
+                        className="p-2 hover:bg-white/10 rounded-lg transition-all"
+                        title="Editar"
+                      >
+                        <Edit2 className="w-4 h-4 text-gray-400 hover:text-white" />
+                      </button>
+                      <button
+                        onClick={() => removerCartao(cartao.id)}
+                        className="p-2 hover:bg-red-500/20 rounded-lg transition-all"
+                        title="Remover"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-400 hover:text-red-300" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4 ${
+                    status.cor === 'green' ? 'bg-green-500/20 text-green-400' :
+                    status.cor === 'red' ? 'bg-red-500/20 text-red-400' :
+                    status.cor === 'yellow' ? 'bg-yellow-500/20 text-yellow-400' :
+                    'bg-blue-500/20 text-blue-400'
+                  }`}>
+                    {status.cor === 'green' && '✅'}
+                    {status.cor === 'red' && '❌'}
+                    {status.cor === 'yellow' && '⚠️'}
+                    {status.cor === 'blue' && '⏳'}
+                    {status.texto}
+                  </div>
+
+                  <div className="mb-4">
+                    <p className="text-sm text-gray-400 mb-1">Fatura atual</p>
+                    <p className="text-4xl md:text-5xl font-black text-green-400">
+                      R$ {fatura.toFixed(2)}
+                    </p>
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs text-gray-400 mb-1">
+                      <span>Limite disponível</span>
+                      <span className="font-bold">R$ {(cartao.limite - fatura).toFixed(2)}</span>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          percentualUtilizado > 90 ? 'bg-red-500' :
+                          percentualUtilizado > 70 ? 'bg-yellow-500' :
+                          'bg-green-500'
+                        }`}
+                        style={{ width: `${Math.min(percentualUtilizado, 100)}%` }}
+                      />
+                    </div>
+                    <div className="flex justify-between text-xs mt-1">
+                      <span className="text-gray-500">R$ 0</span>
+                      <span className="font-bold text-gray-400">{percentualUtilizado.toFixed(1)}%</span>
+                      <span className="text-gray-500">R$ {cartao.limite.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 md:p-6 lg:p-8 border-t-2 border-gray-800">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-black text-green-400">📋 Compras ({gastosDoCartao.length})</h4>
+                    {status.status === 'pendente' && fatura > 0 && (
+                      <button
+                        onClick={() => marcarFaturaPaga(cartao.id)}
+                        className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 font-bold px-3 py-1 rounded-lg transition-all"
+                      >
+                        Marcar paga
+                      </button>
+                    )}
+                  </div>
+
+                  {gastosDoCartao.length === 0 ? (
+                    <p className="text-gray-500 text-sm text-center py-4">Nenhuma compra neste mês</p>
+                  ) : (
+                    <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
+                      {gastosDoCartao.map(gasto => {
+                        const cat = categorias.find(c => c.key === gasto.categoria);
+                        return (
+                          <div key={gasto.id} className="bg-gray-800/50 rounded-lg p-3 flex justify-between items-center hover:bg-gray-800 transition-all group">
+                            <div className="flex items-center gap-3 flex-1">
+                              <span className="text-xl">{cat?.icone || '💰'}</span>
+                              <div className="flex-1">
+                                <p className="font-bold text-white text-sm">{gasto.descricao}</p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(gasto.data).toLocaleDateString('pt-BR')}
+                                  {gasto.parcelas > 1 && ` • Parcela ${gasto.parcelaAtual}/${gasto.parcelas}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="font-black text-red-400">R$ {gasto.valor.toFixed(2)}</span>
+                              <button
+                                onClick={() => removerGastoCartao(gasto.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all"
+                              >
+                                <Trash2 className="w-4 h-4 text-red-400" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal Adicionar/Editar Cartão */}
+      {modalCartaoAberto && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-green-500/30 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
+            <h3 className="text-2xl font-black text-green-400 mb-6">
+              {editandoCartao ? '✏️ Editar Cartão' : '➕ Novo Cartão'}
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Nome do Cartão</label>
+                <input
+                  type="text"
+                  value={novoCartao.nome}
+                  onChange={(e) => setNovoCartao({...novoCartao, nome: e.target.value})}
+                  placeholder="Ex: Nubank, Itaú..."
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Vencimento (dia)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={novoCartao.diaVencimento}
+                    onChange={(e) => setNovoCartao({...novoCartao, diaVencimento: e.target.value})}
+                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Fechamento (dia)</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="31"
+                    value={novoCartao.diaFechamento}
+                    onChange={(e) => setNovoCartao({...novoCartao, diaFechamento: e.target.value})}
+                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Limite do Cartão (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={novoCartao.limite}
+                  onChange={(e) => setNovoCartao({...novoCartao, limite: e.target.value})}
+                  placeholder="0.00"
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setModalCartaoAberto(false);
+                  setEditandoCartao(null);
+                  setNovoCartao({ nome: '', diaVencimento: 1, diaFechamento: 1, limite: '' });
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={editandoCartao ? salvarEdicaoCartao : adicionarCartao}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 rounded-xl transition-all shadow-xl"
+              >
+                {editandoCartao ? 'Salvar' : 'Adicionar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Adicionar Gasto no Cartão */}
+      {modalGastoCartaoAberto && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-green-500/30 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <h3 className="text-2xl font-black text-green-400 mb-6">🛍️ Nova Compra no Cartão</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Selecione o Cartão</label>
+                <select
+                  value={novoGastoCartao.cartaoId}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, cartaoId: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                >
+                  <option value="">Escolha um cartão</option>
+                  {cartoes.map(cartao => (
+                    <option key={cartao.id} value={cartao.id}>{cartao.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Descrição</label>
+                <input
+                  type="text"
+                  value={novoGastoCartao.descricao}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, descricao: e.target.value})}
+                  placeholder="Ex: Compra na Amazon"
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Valor Total</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    value={novoGastoCartao.valor}
+                    onChange={(e) => setNovoGastoCartao({...novoGastoCartao, valor: e.target.value})}
+                    placeholder="0.00"
+                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Parcelas</label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="24"
+                    value={novoGastoCartao.parcelas}
+                    onChange={(e) => setNovoGastoCartao({...novoGastoCartao, parcelas: e.target.value})}
+                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                  />
+                </div>
+              </div>
+
+              {parseInt(novoGastoCartao.parcelas) > 1 && novoGastoCartao.valor && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
+                  <p className="text-sm text-blue-400">
+                    💡 {novoGastoCartao.parcelas}x de <span className="font-black">
+                      R$ {(parseFloat(novoGastoCartao.valor) / parseInt(novoGastoCartao.parcelas)).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Data da Compra</label>
+                <input
+                  type="date"
+                  value={novoGastoCartao.data}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, data: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Categoria</label>
+                <select
+                  value={novoGastoCartao.categoria}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, categoria: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
+                >
+                  {categorias.map(cat => (
+                    <option key={cat.key} value={cat.key}>
+                      {cat.icone} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setModalGastoCartaoAberto(false);
+                  setNovoGastoCartao({
+                    cartaoId: '',
+                    descricao: '',
+                    valor: '',
+                    data: new Date().toISOString().split('T')[0],
+                    categoria: 'outros',
+                    parcelas: 1
+                  });
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={adicionarGastoNoCartao}
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 rounded-xl transition-all shadow-xl"
+              >
+                Adicionar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
 
   const renderDashboard = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
@@ -1467,6 +2086,7 @@ export default function ControleFinanceiro() {
         {paginaAtual === 'dashboard' && renderDashboard()}
         {paginaAtual === 'registro' && renderRegistro()}
         {paginaAtual === 'gastosfixos' && renderGastosFixos()}
+        {paginaAtual === 'faturacartao' && renderFaturaCartao()}
         {paginaAtual === 'analises' && renderAnalises()}
         {paginaAtual === 'relatorios' && renderRelatorios()}
       </div>
