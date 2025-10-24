@@ -7,7 +7,6 @@ export default function ControleFinanceiro() {
   const [menuAberto, setMenuAberto] = useState(false);
   const [mesSelecionado, setMesSelecionado] = useState(new Date().getMonth());
   const [anoSelecionado, setAnoSelecionado] = useState(new Date().getFullYear());
-  // ALTERAÇÃO: Salários e Orçamentos agora são independentes por mês/ano
   const [salariosPorMes, setSalariosPorMes] = useState({});
   const [orcamentosPorMes, setOrcamentosPorMes] = useState({});
   const [gastosDiarios, setGastosDiarios] = useState([]);
@@ -25,7 +24,6 @@ export default function ControleFinanceiro() {
     diaVencimento: 1
   });
   const [mostrarSalvo, setMostrarSalvo] = useState(false);
-  // Estados para Cartões de Crédito
   const [cartoes, setCartoes] = useState([]);
   const [gastosCartao, setGastosCartao] = useState([]);
   const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
@@ -62,16 +60,13 @@ export default function ControleFinanceiro() {
   ];
 
 
-  // Função para obter chave do mês/ano
   const getChaveMesAno = (mes, ano) => `${mes}-${ano}`;
 
-  // Função para obter salário do mês atual
   const getSalarioMesAtual = () => {
     const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
     return salariosPorMes[chave] || '';
   };
 
-  // Função para atualizar salário do mês atual
   const atualizarSalarioMesAtual = (novoSalario) => {
     const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
     setSalariosPorMes({
@@ -80,7 +75,6 @@ export default function ControleFinanceiro() {
     });
   };
 
-  // Função para obter orçamento do mês atual
   const getOrcamentoMesAtual = () => {
     const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
     return orcamentosPorMes[chave] || {
@@ -95,7 +89,6 @@ export default function ControleFinanceiro() {
     };
   };
 
-  // Função para atualizar orçamento do mês atual
   const atualizarOrcamentoMesAtual = (novoOrcamento) => {
     const chave = getChaveMesAno(mesSelecionado, anoSelecionado);
     setOrcamentosPorMes({
@@ -104,7 +97,6 @@ export default function ControleFinanceiro() {
     });
   };
 
-  // Obter salário e orçamento do mês selecionado
   const salario = getSalarioMesAtual();
   const orcamentos = getOrcamentoMesAtual();
 
@@ -125,30 +117,25 @@ export default function ControleFinanceiro() {
         const dados = JSON.parse(dadosSalvos);
         setMesSelecionado(dados.mesSelecionado || new Date().getMonth());
         setAnoSelecionado(dados.anoSelecionado || new Date().getFullYear());
-        
-        // Migração de dados: carregar salários por mês ou migrar dados antigos
+
         if (dados.salariosPorMes) {
           setSalariosPorMes(dados.salariosPorMes);
         } else if (dados.salario) {
-          // Migrar dados antigos: colocar salário antigo no mês salvo
           const chave = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
           setSalariosPorMes({
             [chave]: dados.salario
           });
         }
-        
-        // Migração de dados: carregar orçamentos por mês ou migrar dados antigos
+
         if (dados.orcamentosPorMes) {
           setOrcamentosPorMes(dados.orcamentosPorMes);
         } else if (dados.orcamentos) {
-          // Migrar dados antigos: colocar orçamento antigo no mês salvo
           const chave = `${dados.mesSelecionado || new Date().getMonth()}-${dados.anoSelecionado || new Date().getFullYear()}`;
           setOrcamentosPorMes({
             [chave]: dados.orcamentos
           });
         }
-        
-        // Migração de dados: adicionar mes e ano aos gastos antigos
+
         const gastosComMesAno = (dados.gastosDiarios || []).map(g => {
           if (g.mes === undefined || g.ano === undefined) {
             return {
@@ -159,7 +146,7 @@ export default function ControleFinanceiro() {
           }
           return g;
         });
-        
+
         setGastosDiarios(gastosComMesAno);
         setGastosFixos(dados.gastosFixos || []);
         setCartoes(dados.cartoes || []);
@@ -174,49 +161,37 @@ export default function ControleFinanceiro() {
     const dados = {
       mesSelecionado,
       anoSelecionado,
-      salariosPorMes, // Agora salvamos todos os salários
-      orcamentosPorMes, // Agora salvamos todos os orçamentos
+      salariosPorMes,
+      orcamentosPorMes,
       gastosDiarios,
       gastosFixos,
+      cartoes,
+      gastosCartao,
       ultimaAtualizacao: new Date().toISOString()
     };
     localStorage.setItem('controleFinanceiro', JSON.stringify(dados));
-    
+
     if (Object.keys(salariosPorMes).length > 0 || gastosDiarios.length > 0 || gastosFixos.length > 0) {
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
     }
   }, [mesSelecionado, anoSelecionado, salariosPorMes, orcamentosPorMes, gastosDiarios, gastosFixos, cartoes, gastosCartao]);
 
-  
+
   // ==================== FUNÇÕES DE CARTÃO ====================
-  
+
   const calcularFaturaCartao = (cartaoId) => {
     const gastos = gastosCartao.filter(g => {
       if (g.cartaoId !== cartaoId) return false;
       
-      // Garantir que a data está no formato correto
       const dataGasto = new Date(g.data + 'T00:00:00');
       const mesGasto = dataGasto.getMonth();
       const anoGasto = dataGasto.getFullYear();
-      
-      // Debug: mostrar os gastos sendo filtrados
-      console.log('Verificando gasto:', {
-        descricao: g.descricao,
-        valor: g.valor,
-        data: g.data,
-        mesGasto,
-        anoGasto,
-        mesSelecionado,
-        anoSelecionado,
-        match: mesGasto === mesSelecionado && anoGasto === anoSelecionado
-      });
       
       return mesGasto === mesSelecionado && anoGasto === anoSelecionado;
     });
     
     const total = gastos.reduce((total, g) => total + (parseFloat(g.valor) || 0), 0);
-    console.log('Total da fatura para cartão', cartaoId, ':', total, 'gastos:', gastos.length);
     return total;
   };
 
@@ -225,26 +200,26 @@ export default function ControleFinanceiro() {
     const diaHoje = hoje.getDate();
     const mesHoje = hoje.getMonth();
     const anoHoje = hoje.getFullYear();
-    
+
     if (mesSelecionado !== mesHoje || anoSelecionado !== anoHoje) {
       return { status: 'futuro', cor: 'gray', texto: 'Futuro' };
     }
-    
+
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     const gastoFixoCartao = gastosFixos.find(gf => gf.cartaoId === cartao.id);
-    
-    if (gastoFixoCartao && gastoFixoCartao.statusMes[mesAno] === 'pago') {
+
+    if (gastoFixoCartao && gastoFixoCartao.statusMes && gastoFixoCartao.statusMes[mesAno] === 'pago') {
       return { status: 'pago', cor: 'green', texto: 'Paga' };
     }
-    
+
     if (diaHoje > cartao.diaVencimento) {
       return { status: 'atrasado', cor: 'red', texto: 'Atrasada' };
     }
-    
+
     if (diaHoje >= cartao.diaVencimento - 5) {
       return { status: 'proximo', cor: 'yellow', texto: 'Vence em breve' };
     }
-    
+
     return { status: 'pendente', cor: 'blue', texto: 'Pendente' };
   };
 
@@ -263,8 +238,7 @@ export default function ControleFinanceiro() {
     };
 
     setCartoes([...cartoes, cartao]);
-    
-    // Adicionar automaticamente aos gastos fixos
+
     const gastoFixoCartao = {
       id: Date.now() + 1,
       descricao: `Fatura ${novoCartao.nome}`,
@@ -273,20 +247,21 @@ export default function ControleFinanceiro() {
       diaVencimento: parseInt(novoCartao.diaVencimento),
       cartaoId: cartao.id,
       tipo: 'fatura-cartao',
-      statusMes: {}
+      statusMes: {},
+      valorDinamico: true
     };
-    
+
     setGastosFixos([...gastosFixos, gastoFixoCartao]);
-    
-    // Reset form
+
     setNovoCartao({
       nome: '',
       diaVencimento: 1,
       diaFechamento: 1,
       limite: ''
     });
-    
+
     setModalCartaoAberto(false);
+    alert('Cartão adicionado com sucesso! Aparecerá em Gastos Fixos.');
   };
 
   const editarCartao = (cartao) => {
@@ -340,7 +315,7 @@ export default function ControleFinanceiro() {
 
   const removerCartao = (cartaoId) => {
     if (!window.confirm('Tem certeza que deseja remover este cartão? Todos os gastos serão perdidos.')) return;
-    
+
     setCartoes(cartoes.filter(c => c.id !== cartaoId));
     setGastosCartao(gastosCartao.filter(g => g.cartaoId !== cartaoId));
     setGastosFixos(gastosFixos.filter(gf => gf.cartaoId !== cartaoId));
@@ -359,7 +334,6 @@ export default function ControleFinanceiro() {
       const dataGasto = new Date(novoGastoCartao.data + 'T00:00:00');
       dataGasto.setMonth(dataGasto.getMonth() + i);
       
-      // Formatar a data corretamente (YYYY-MM-DD)
       const ano = dataGasto.getFullYear();
       const mes = String(dataGasto.getMonth() + 1).padStart(2, '0');
       const dia = String(dataGasto.getDate()).padStart(2, '0');
@@ -377,17 +351,10 @@ export default function ControleFinanceiro() {
         parcelas: parseInt(novoGastoCartao.parcelas),
         parcelaAtual: i + 1
       });
-      
-      console.log('Adicionando gasto:', {
-        descricao: gastos[gastos.length - 1].descricao,
-        valor: valorParcela,
-        data: dataFormatada,
-        cartaoId: novoGastoCartao.cartaoId
-      });
     }
 
     setGastosCartao([...gastosCartao, ...gastos]);
-    
+
     alert(`${gastos.length} gasto(s) adicionado(s) com sucesso!`);
     
     setNovoGastoCartao({
@@ -398,7 +365,7 @@ export default function ControleFinanceiro() {
       categoria: 'outros',
       parcelas: 1
     });
-    
+
     setModalGastoCartaoAberto(false);
   };
 
@@ -490,7 +457,7 @@ export default function ControleFinanceiro() {
       ano: anoSelecionado
     }));
     setGastosDiarios([...gastosDiarios, ...novosGastos]);
-    
+
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     setGastosFixos(gastosFixos.map(gf => ({
       ...gf,
@@ -498,7 +465,6 @@ export default function ControleFinanceiro() {
     })));
   };
 
-  // Filtrar gastos diários apenas do mês/ano selecionado
   const gastosDoMesAtual = gastosDiarios.filter(g => g.mes === mesSelecionado && g.ano === anoSelecionado);
 
   const calcularGastosPorCategoria = () => {
@@ -508,15 +474,27 @@ export default function ControleFinanceiro() {
         .filter(g => g.categoria === cat.key)
         .reduce((acc, g) => acc + g.valor, 0);
     });
-    
-    // ADICIONAR: Incluir gastos fixos marcados como pagos no mês atual
+
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     gastosFixos.forEach(gf => {
-      if (gf.statusMes[mesAno] === 'pago') {
-        gastos[gf.categoria] = (gastos[gf.categoria] || 0) + gf.valor;
+      if (gf.statusMes && gf.statusMes[mesAno] === 'pago') {
+        // Se for fatura de cartão, usar o valor calculado dinamicamente
+        const valorGasto = (gf.tipo === 'fatura-cartao' && gf.cartaoId) 
+          ? calcularFaturaCartao(gf.cartaoId) 
+          : gf.valor;
+        gastos[gf.categoria] = (gastos[gf.categoria] || 0) + valorGasto;
       }
     });
+
+    const gastosCartaoMesAtual = gastosCartao.filter(gc => {
+      const dataGasto = new Date(gc.data + 'T00:00:00');
+      return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+    });
     
+    gastosCartaoMesAtual.forEach(gc => {
+      gastos[gc.categoria] = (gastos[gc.categoria] || 0) + gc.valor;
+    });
+
     return gastos;
   };
 
@@ -527,7 +505,7 @@ export default function ControleFinanceiro() {
   const saldoRestante = salarioNumerico - totalGasto;
   const economiaPercentual = salarioNumerico > 0 ? ((saldoRestante / salarioNumerico) * 100) : 0;
 
-  
+
   const renderFaturaCartao = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
       <div className="flex items-center gap-3 md:gap-4 mb-4">
@@ -588,7 +566,7 @@ export default function ControleFinanceiro() {
             const status = calcularStatusCartao(cartao);
             const percentualUtilizado = (fatura / cartao.limite) * 100;
             const gastosDoCartao = gastosCartao.filter(g => {
-              const dataGasto = new Date(g.data);
+              const dataGasto = new Date(g.data + 'T00:00:00');
               return g.cartaoId === cartao.id && 
                      dataGasto.getMonth() === mesSelecionado && 
                      dataGasto.getFullYear() === anoSelecionado;
@@ -605,7 +583,7 @@ export default function ControleFinanceiro() {
                       </p>
                       <p className="text-xs text-gray-500">Fechamento: dia {cartao.diaFechamento}</p>
                     </div>
-                    
+
                     <div className="flex gap-2">
                       <button
                         onClick={() => editarCartao(cartao)}
@@ -630,88 +608,74 @@ export default function ControleFinanceiro() {
                     status.cor === 'yellow' ? 'bg-yellow-500/20 text-yellow-400' :
                     'bg-blue-500/20 text-blue-400'
                   }`}>
-                    {status.cor === 'green' && '✅'}
-                    {status.cor === 'red' && '❌'}
-                    {status.cor === 'yellow' && '⚠️'}
-                    {status.cor === 'blue' && '⏳'}
                     {status.texto}
                   </div>
 
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-400 mb-1">Fatura atual</p>
-                    <p className="text-4xl md:text-5xl font-black text-green-400">
-                      R$ {fatura.toFixed(2)}
-                    </p>
-                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-sm text-gray-400">Fatura {meses[mesSelecionado]}</span>
+                        <span className="text-2xl font-black text-white">R$ {fatura.toFixed(2)}</span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-3">
+                        <div 
+                          className={`h-3 rounded-full transition-all ${
+                            percentualUtilizado >= 100 ? 'bg-red-500' :
+                            percentualUtilizado >= 80 ? 'bg-orange-500' :
+                            percentualUtilizado >= 50 ? 'bg-yellow-500' :
+                            'bg-green-500'
+                          }`}
+                          style={{ width: `${Math.min(percentualUtilizado, 100)}%` }}
+                        ></div>
+                      </div>
+                      <div className="flex justify-between items-center mt-2">
+                        <span className="text-xs text-gray-500">Limite: R$ {cartao.limite.toFixed(2)}</span>
+                        <span className={`text-xs font-bold ${
+                          percentualUtilizado >= 100 ? 'text-red-400' :
+                          percentualUtilizado >= 80 ? 'text-orange-400' :
+                          percentualUtilizado >= 50 ? 'text-yellow-400' :
+                          'text-green-400'
+                        }`}>
+                          {percentualUtilizado.toFixed(1)}% utilizado
+                        </span>
+                      </div>
+                    </div>
 
-                  <div>
-                    <div className="flex justify-between text-xs text-gray-400 mb-1">
-                      <span>Limite disponível</span>
-                      <span className="font-bold">R$ {(cartao.limite - fatura).toFixed(2)}</span>
-                    </div>
-                    <div className="w-full bg-gray-800 rounded-full h-3 overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          percentualUtilizado > 90 ? 'bg-red-500' :
-                          percentualUtilizado > 70 ? 'bg-yellow-500' :
-                          'bg-green-500'
-                        }`}
-                        style={{ width: `${Math.min(percentualUtilizado, 100)}%` }}
-                      />
-                    </div>
-                    <div className="flex justify-between text-xs mt-1">
-                      <span className="text-gray-500">R$ 0</span>
-                      <span className="font-bold text-gray-400">{percentualUtilizado.toFixed(1)}%</span>
-                      <span className="text-gray-500">R$ {cartao.limite.toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
+                    {gastosDoCartao.length > 0 && (
+                      <div className="mt-4 pt-4 border-t border-gray-700">
+                        <h4 className="text-sm font-bold text-gray-400 mb-2">Gastos do mês ({gastosDoCartao.length})</h4>
+                        <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                          {gastosDoCartao.map(g => (
+                            <div key={g.id} className="flex justify-between items-center bg-black/30 rounded-lg p-2">
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-white font-medium truncate">{g.descricao}</p>
+                                <p className="text-xs text-gray-500">{new Date(g.data).toLocaleDateString('pt-BR')}</p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-red-400">R$ {g.valor.toFixed(2)}</span>
+                                <button
+                                  onClick={() => removerGastoCartao(g.id)}
+                                  className="p-1 hover:bg-red-500/20 rounded transition-all"
+                                  title="Remover"
+                                >
+                                  <Trash2 className="w-3 h-3 text-red-400" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                <div className="p-4 md:p-6 lg:p-8 border-t-2 border-gray-800">
-                  <div className="flex justify-between items-center mb-4">
-                    <h4 className="font-black text-green-400">📋 Compras ({gastosDoCartao.length})</h4>
-                    {status.status === 'pendente' && fatura > 0 && (
+                    {status.status !== 'pago' && status.status !== 'futuro' && (
                       <button
                         onClick={() => marcarFaturaPaga(cartao.id)}
-                        className="text-xs bg-green-600/20 hover:bg-green-600/30 text-green-400 font-bold px-3 py-1 rounded-lg transition-all"
+                        className="w-full mt-4 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-black py-2 rounded-xl transition-all"
                       >
-                        Marcar paga
+                        ✓ Marcar como Paga
                       </button>
                     )}
                   </div>
-
-                  {gastosDoCartao.length === 0 ? (
-                    <p className="text-gray-500 text-sm text-center py-4">Nenhuma compra neste mês</p>
-                  ) : (
-                    <div className="space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                      {gastosDoCartao.map(gasto => {
-                        const cat = categorias.find(c => c.key === gasto.categoria);
-                        return (
-                          <div key={gasto.id} className="bg-gray-800/50 rounded-lg p-3 flex justify-between items-center hover:bg-gray-800 transition-all group">
-                            <div className="flex items-center gap-3 flex-1">
-                              <span className="text-xl">{cat?.icone || '💰'}</span>
-                              <div className="flex-1">
-                                <p className="font-bold text-white text-sm">{gasto.descricao}</p>
-                                <p className="text-xs text-gray-400">
-                                  {new Date(gasto.data).toLocaleDateString('pt-BR')}
-                                  {gasto.parcelas > 1 && ` • Parcela ${gasto.parcelaAtual}/${gasto.parcelas}`}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-black text-red-400">R$ {gasto.valor.toFixed(2)}</span>
-                              <button
-                                onClick={() => removerGastoCartao(gasto.id)}
-                                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/20 rounded transition-all"
-                              >
-                                <Trash2 className="w-4 h-4 text-red-400" />
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
                 </div>
               </div>
             );
@@ -719,13 +683,117 @@ export default function ControleFinanceiro() {
         </div>
       )}
 
-      {/* Modal Adicionar/Editar Cartão */}
+      {/* Seção de todos os gastos em cartão do mês */}
+      {gastosCartao.filter(gc => {
+        const dataGasto = new Date(gc.data + 'T00:00:00');
+        return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+      }).length > 0 && (
+        <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10 mt-6">
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 flex items-center gap-2">
+            <FileText className="w-7 h-7" />
+            Todos os Gastos em Cartão - {meses[mesSelecionado]} {anoSelecionado}
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b-2 border-green-500/30">
+                  <th className="p-3 text-left text-green-300 font-black text-xs md:text-sm uppercase">Cartão</th>
+                  <th className="p-3 text-left text-green-300 font-black text-xs md:text-sm uppercase">Descrição</th>
+                  <th className="p-3 text-left text-green-300 font-black text-xs md:text-sm uppercase">Data</th>
+                  <th className="p-3 text-right text-green-300 font-black text-xs md:text-sm uppercase">Valor</th>
+                  <th className="p-3 text-center text-green-300 font-black text-xs md:text-sm uppercase">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {gastosCartao
+                  .filter(gc => {
+                    const dataGasto = new Date(gc.data + 'T00:00:00');
+                    return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+                  })
+                  .sort((a, b) => new Date(b.data) - new Date(a.data))
+                  .map((gc, index) => {
+                    const cartao = cartoes.find(c => c.id === gc.cartaoId);
+                    const cat = categorias.find(c => c.key === gc.categoria);
+                    return (
+                      <tr key={gc.id} className={`border-b border-gray-800 hover:bg-gray-800/50 transition-all ${index % 2 === 0 ? 'bg-black/20' : ''}`}>
+                        <td className="p-3">
+                          <span className="text-blue-400 font-bold text-sm">{cartao?.nome || 'Cartão removido'}</span>
+                        </td>
+                        <td className="p-3">
+                          <div>
+                            <p className="text-white font-bold text-sm">{gc.descricao}</p>
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-bold mt-1" style={{ color: cat.cor, backgroundColor: `${cat.cor}20` }}>
+                              {cat.icone} {cat.label}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <span className="text-gray-400 text-sm">{new Date(gc.data + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                        </td>
+                        <td className="p-3 text-right">
+                          <span className="text-red-400 font-black text-base">R$ {gc.valor.toFixed(2)}</span>
+                        </td>
+                        <td className="p-3 text-center">
+                          <button
+                            onClick={() => removerGastoCartao(gc.id)}
+                            className="bg-red-600/20 hover:bg-red-600/30 text-red-400 p-2 rounded-lg transition-all"
+                            title="Remover"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+              <tfoot>
+                <tr className="border-t-2 border-green-500/50 bg-gradient-to-r from-black/50 to-black/30">
+                  <td colSpan="3" className="p-3 text-right font-black text-green-300 text-base uppercase">Total Gasto:</td>
+                  <td className="p-3 text-right text-red-400 font-black text-lg">
+                    R$ {gastosCartao
+                      .filter(gc => {
+                        const dataGasto = new Date(gc.data + 'T00:00:00');
+                        return dataGasto.getMonth() === mesSelecionado && dataGasto.getFullYear() === anoSelecionado;
+                      })
+                      .reduce((acc, gc) => acc + gc.valor, 0)
+                      .toFixed(2)}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      )}
+
       {modalCartaoAberto && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-green-500/30 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl">
-            <h3 className="text-2xl font-black text-green-400 mb-6">
-              {editandoCartao ? '✏️ Editar Cartão' : '➕ Novo Cartão'}
-            </h3>
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setModalCartaoAberto(false);
+            setEditandoCartao(null);
+            setNovoCartao({ nome: '', diaVencimento: 1, diaFechamento: 1, limite: '' });
+          }}
+        >
+          <div 
+            className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl md:text-3xl font-black text-green-400">
+                {editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}
+              </h2>
+              <button
+                onClick={() => {
+                  setModalCartaoAberto(false);
+                  setEditandoCartao(null);
+                  setNovoCartao({ nome: '', diaVencimento: 1, diaFechamento: 1, limite: '' });
+                }}
+                className="text-gray-400 hover:text-white transition-all hover:scale-110 p-2 hover:bg-red-500/20 rounded-lg"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
 
             <div className="space-y-4">
               <div>
@@ -741,7 +809,7 @@ export default function ControleFinanceiro() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-gray-400 mb-2">Vencimento (dia)</label>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Dia Vencimento</label>
                   <input
                     type="number"
                     min="1"
@@ -753,7 +821,7 @@ export default function ControleFinanceiro() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-gray-400 mb-2">Fechamento (dia)</label>
+                  <label className="block text-sm font-bold text-gray-400 mb-2">Dia Fechamento</label>
                   <input
                     type="number"
                     min="1"
@@ -766,7 +834,7 @@ export default function ControleFinanceiro() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-400 mb-2">Limite do Cartão (R$)</label>
+                <label className="block text-sm font-bold text-gray-400 mb-2">Limite (R$)</label>
                 <input
                   type="number"
                   step="0.01"
@@ -800,101 +868,27 @@ export default function ControleFinanceiro() {
         </div>
       )}
 
-      {/* Modal Adicionar Gasto no Cartão */}
       {modalGastoCartaoAberto && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gradient-to-br from-gray-900 to-black border-2 border-green-500/30 rounded-2xl p-6 md:p-8 max-w-md w-full shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <h3 className="text-2xl font-black text-green-400 mb-6">🛍️ Nova Compra no Cartão</h3>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-gray-400 mb-2">Selecione o Cartão</label>
-                <select
-                  value={novoGastoCartao.cartaoId}
-                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, cartaoId: e.target.value})}
-                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                >
-                  <option value="">Escolha um cartão</option>
-                  {cartoes.map(cartao => (
-                    <option key={cartao.id} value={cartao.id}>{cartao.nome}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-400 mb-2">Descrição</label>
-                <input
-                  type="text"
-                  value={novoGastoCartao.descricao}
-                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, descricao: e.target.value})}
-                  placeholder="Ex: Compra na Amazon"
-                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-gray-400 mb-2">Valor Total</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    value={novoGastoCartao.valor}
-                    onChange={(e) => setNovoGastoCartao({...novoGastoCartao, valor: e.target.value})}
-                    placeholder="0.00"
-                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-gray-400 mb-2">Parcelas</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="24"
-                    value={novoGastoCartao.parcelas}
-                    onChange={(e) => setNovoGastoCartao({...novoGastoCartao, parcelas: e.target.value})}
-                    className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                  />
-                </div>
-              </div>
-
-              {parseInt(novoGastoCartao.parcelas) > 1 && novoGastoCartao.valor && (
-                <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-3">
-                  <p className="text-sm text-blue-400">
-                    💡 {novoGastoCartao.parcelas}x de <span className="font-black">
-                      R$ {(parseFloat(novoGastoCartao.valor) / parseInt(novoGastoCartao.parcelas)).toFixed(2)}
-                    </span>
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <label className="block text-sm font-bold text-gray-400 mb-2">Data da Compra</label>
-                <input
-                  type="date"
-                  value={novoGastoCartao.data}
-                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, data: e.target.value})}
-                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-gray-400 mb-2">Categoria</label>
-                <select
-                  value={novoGastoCartao.categoria}
-                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, categoria: e.target.value})}
-                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-4 py-3 rounded-xl focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all"
-                >
-                  {categorias.map(cat => (
-                    <option key={cat.key} value={cat.key}>
-                      {cat.icone} {cat.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="flex gap-3 mt-6">
+        <div 
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            setModalGastoCartaoAberto(false);
+            setNovoGastoCartao({
+              cartaoId: '',
+              descricao: '',
+              valor: '',
+              data: new Date().toISOString().split('T')[0],
+              categoria: 'outros',
+              parcelas: 1
+            });
+          }}
+        >
+          <div 
+            className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-blue-500/50 rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl max-h-[85vh] overflow-y-auto custom-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl md:text-2xl font-black text-blue-400">Gasto no Cartão</h2>
               <button
                 onClick={() => {
                   setModalGastoCartaoAberto(false);
@@ -907,13 +901,117 @@ export default function ControleFinanceiro() {
                     parcelas: 1
                   });
                 }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 rounded-xl transition-all"
+                className="text-gray-400 hover:text-white transition-all hover:scale-110 p-2 hover:bg-red-500/20 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Cartão</label>
+                <select
+                  value={novoGastoCartao.cartaoId}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, cartaoId: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                >
+                  {cartoes.map(c => (
+                    <option key={c.id} value={c.id}>{c.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Descrição</label>
+                <input
+                  type="text"
+                  value={novoGastoCartao.descricao}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, descricao: e.target.value})}
+                  placeholder="Ex: Compra supermercado"
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Valor Total (R$)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={novoGastoCartao.valor}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, valor: e.target.value})}
+                  placeholder="0.00"
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Parcelas</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="24"
+                  value={novoGastoCartao.parcelas}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, parcelas: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                />
+              </div>
+
+              {parseInt(novoGastoCartao.parcelas) > 1 && novoGastoCartao.valor && (
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-2">
+                  <p className="text-xs text-blue-400">
+                    💡 {novoGastoCartao.parcelas}x de <span className="font-black">
+                      R$ {(parseFloat(novoGastoCartao.valor) / parseInt(novoGastoCartao.parcelas)).toFixed(2)}
+                    </span>
+                  </p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Data da Compra</label>
+                <input
+                  type="date"
+                  value={novoGastoCartao.data}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, data: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 mb-1">Categoria</label>
+                <select
+                  value={novoGastoCartao.categoria}
+                  onChange={(e) => setNovoGastoCartao({...novoGastoCartao, categoria: e.target.value})}
+                  className="w-full bg-gray-800 border-2 border-green-500/50 text-white font-bold px-3 py-2 rounded-lg focus:border-green-400 focus:ring-2 focus:ring-green-500/50 outline-none transition-all text-sm"
+                >
+                  {categorias.map(cat => (
+                    <option key={cat.key} value={cat.key}>
+                      {cat.icone} {cat.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  setModalGastoCartaoAberto(false);
+                  setNovoGastoCartao({
+                    cartaoId: '',
+                    descricao: '',
+                    valor: '',
+                    data: new Date().toISOString().split('T')[0],
+                    categoria: 'outros',
+                    parcelas: 1
+                  });
+                }}
+                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-all text-sm"
               >
                 Cancelar
               </button>
               <button
                 onClick={adicionarGastoNoCartao}
-                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-3 rounded-xl transition-all shadow-xl"
+                className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-black font-black py-2 rounded-lg transition-all shadow-xl text-sm"
               >
                 Adicionar
               </button>
@@ -941,7 +1039,7 @@ export default function ControleFinanceiro() {
           <p className="text-gray-400 text-xs md:text-sm lg:text-base">Controle total das finanças de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
-      
+
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
         <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-2xl shadow-green-500/20 ml-auto">
           <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Período Atual</p>
@@ -1094,171 +1192,194 @@ export default function ControleFinanceiro() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
-            <span className="text-2xl md:text-3xl lg:text-4xl">📊</span>
-            <span className="hidden sm:inline">Distribuição de Gastos</span>
-            <span className="sm:hidden">Gastos</span>
-          </h2>
-          {totalGasto > 0 ? (
-            <ResponsiveContainer width="100%" height={360}>
-              <PieChart>
-                <Pie
-                  data={categorias.map(cat => ({
-                    name: cat.label,
-                    value: gastosReais[cat.key] || 0,
-                    cor: cat.cor
-                  })).filter(d => d.value > 0)}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  dataKey="value"
-                  animationBegin={0}
-                  animationDuration={800}
-                >
-                  {categorias.map((cat, index) => (
-                    <Cell key={`cell-${index}`} fill={cat.cor} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  formatter={(value) => `R$ ${value.toFixed(2)}`}
-                  contentStyle={{ 
-                    backgroundColor: '#1f2937', 
-                    border: '2px solid #10b981',
-                    borderRadius: '12px',
-                    padding: '8px',
-                    fontSize: '12px'
-                  }}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 md:py-24 text-gray-500">
-              <div className="text-6xl md:text-8xl mb-4 md:mb-6 opacity-20">📈</div>
-              <p className="text-base md:text-xl font-bold">Nenhum gasto registrado</p>
-              <p className="text-xs md:text-sm text-gray-600 mt-2">Adicione gastos para visualizar</p>
-            </div>
-          )}
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8">Distribuição por Categoria</h2>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie
+                data={categorias.map(cat => ({
+                  name: cat.label,
+                  value: gastosReais[cat.key] || 0
+                })).filter(d => d.value > 0)}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                outerRadius={100}
+                dataKey="value"
+                animationDuration={800}
+              >
+                {categorias.map((cat, index) => (
+                  <Cell key={`cell-${index}`} fill={cat.cor} />
+                ))}
+              </Pie>
+              <Tooltip 
+                formatter={(value) => `R$ ${value.toFixed(2)}`}
+                contentStyle={{ backgroundColor: '#1f2937', border: '2px solid #10b981', borderRadius: '12px', fontSize: '12px' }}
+              />
+            </PieChart>
+          </ResponsiveContainer>
         </div>
 
         <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
-            <span className="text-2xl md:text-3xl lg:text-4xl">📈</span>
-            <span className="hidden sm:inline">Status por Categoria</span>
-            <span className="sm:hidden">Status</span>
-          </h2>
-          <div className="space-y-3 md:space-y-4 lg:space-y-5 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
-            {categorias.map(cat => {
-              const orcamento = parseFloat(orcamentos[cat.key]) || 0;
-              const gasto = gastosReais[cat.key] || 0;
-              const restante = orcamento - gasto;
-              const percentual = orcamento > 0 ? (gasto / orcamento * 100) : 0;
-
-              if (orcamento === 0 && gasto === 0) return null;
-
-              return (
-                <div key={cat.key} className="bg-black/50 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 border-l-4 hover:bg-black/70 transition-all duration-300 hover:scale-[1.02] shadow-lg" style={{ borderColor: cat.cor }}>
-                  <div className="flex justify-between items-center mb-3 md:mb-4">
-                    <span className="font-black flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg" style={{ color: cat.cor }}>
-                      <span className="text-xl md:text-2xl lg:text-3xl">{cat.icone}</span>
-                      {cat.label}
-                    </span>
-                    <div className="text-right">
-                      <div className={`font-black text-sm md:text-base lg:text-lg ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
-                        {restante >= 0 ? '+' : '-'} R$ {Math.abs(restante).toFixed(2)}
+          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8">Top Categorias</h2>
+          <div className="space-y-4">
+            {categorias
+              .map(cat => ({ ...cat, valor: gastosReais[cat.key] || 0 }))
+              .sort((a, b) => b.valor - a.valor)
+              .filter(cat => cat.valor > 0)
+              .slice(0, 5)
+              .map((cat, index) => {
+                const percentual = totalGasto > 0 ? (cat.valor / totalGasto) * 100 : 0;
+                return (
+                  <div key={cat.key} className="bg-gradient-to-r from-black/50 to-black/30 border border-gray-800 rounded-xl p-4 hover:border-green-500/30 transition-all">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{cat.icone}</span>
+                        <div>
+                          <p className="font-black" style={{ color: cat.cor }}>{cat.label}</p>
+                          <p className="text-xs text-gray-500">#{index + 1} mais gasto</p>
+                        </div>
                       </div>
-                      <div className="text-xs text-gray-500 font-bold">Restante</div>
+                      <div className="text-right">
+                        <p className="text-lg font-black text-red-400">R$ {cat.valor.toFixed(2)}</p>
+                        <p className="text-xs text-gray-500">{percentual.toFixed(1)}% do total</p>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-800 rounded-full h-2 mt-3">
+                      <div 
+                        className="h-2 rounded-full transition-all duration-500"
+                        style={{ 
+                          width: `${percentual}%`,
+                          backgroundColor: cat.cor
+                        }}
+                      ></div>
                     </div>
                   </div>
-                  <div className="bg-gray-800 rounded-full h-3 md:h-4 overflow-hidden shadow-inner mb-2 md:mb-3">
-                    <div 
-                      className="h-3 md:h-4 rounded-full transition-all duration-700 shadow-lg relative overflow-hidden" 
-                      style={{ 
-                        width: `${Math.min(percentual, 100)}%`, 
-                        backgroundColor: percentual > 100 ? '#f59e0b' : cat.cor,
-                        boxShadow: `0 0 15px ${cat.cor}`
-                      }}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-xs md:text-sm">
-                    <span className="text-gray-400">Gasto: <span className="text-red-400 font-bold">R$ {gasto.toFixed(2)}</span></span>
-                    <span className="text-gray-400">Orçado: <span className="text-blue-400 font-bold">R$ {orcamento.toFixed(2)}</span></span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </div>
       </div>
+    </div>
+  );
 
-      <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
-          <span className="text-2xl md:text-3xl lg:text-4xl">🕐</span>
-          <span className="hidden sm:inline">Últimos Gastos Registrados</span>
-          <span className="sm:hidden">Últimos Gastos</span>
-        </h2>
-        {gastosDoMesAtual.length > 0 ? (
-          <div className="overflow-x-auto -mx-4 md:mx-0">
-            <div className="inline-block min-w-full align-middle px-4 md:px-0">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b-2 border-green-500/30">
-                    <th className="p-2 md:p-3 lg:p-4 text-left text-green-300 font-black text-xs md:text-sm">DATA</th>
-                    <th className="p-2 md:p-3 lg:p-4 text-left text-green-300 font-black text-xs md:text-sm">CATEGORIA</th>
-                    <th className="p-2 md:p-3 lg:p-4 text-left text-green-300 font-black text-xs md:text-sm hidden sm:table-cell">DESCRIÇÃO</th>
-                    <th className="p-2 md:p-3 lg:p-4 text-right text-green-300 font-black text-xs md:text-sm">VALOR</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gastosDoMesAtual.slice(-8).reverse().map(gasto => {
-                    const cat = categorias.find(c => c.key === gasto.categoria);
-                    return (
-                      <tr key={gasto.id} className="border-b border-gray-800 hover:bg-gray-800/50 transition-colors">
-                        <td className="p-2 md:p-3 lg:p-4 text-gray-300 font-bold text-xs md:text-sm">{gasto.dia}/{mesSelecionado + 1}</td>
-                        <td className="p-2 md:p-3 lg:p-4">
-                          <span className="inline-flex items-center gap-1 md:gap-2 px-2 md:px-3 lg:px-4 py-1 md:py-2 rounded-lg md:rounded-xl font-bold text-xs md:text-sm" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `1px solid ${cat.cor}40` }}>
-                            <span className="text-base md:text-lg lg:text-xl">{cat.icone}</span>
-                            {cat.label}
-                          </span>
-                        </td>
-                        <td className="p-2 md:p-3 lg:p-4 text-gray-400 text-xs md:text-sm hidden sm:table-cell">{gasto.descricao || '-'}</td>
-                        <td className="p-2 md:p-3 lg:p-4 text-right">
-                          <span className="text-red-400 font-black text-sm md:text-base lg:text-xl">-R$ {gasto.valor.toFixed(2)}</span>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-12 md:py-16 lg:py-20 text-gray-500">
-            <div className="text-5xl md:text-6xl lg:text-8xl mb-4 md:mb-6 opacity-20">📝</div>
-            <p className="text-lg md:text-xl lg:text-2xl font-bold mb-2">Nenhum gasto registrado</p>
-            <p className="text-xs md:text-sm text-gray-600">Adicione gastos na aba "Registrar"</p>
-          </div>
-        )}
+  const renderOrcamento = () => (
+    <div className="space-y-4 md:space-y-6 lg:space-y-8">
+      <div className="flex items-center gap-3 md:gap-4 mb-4">
+        <button
+          onClick={() => setMenuAberto(!menuAberto)}
+          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
+        >
+          {menuAberto ? <X size={24} /> : <Menu size={24} />}
+        </button>
+        <div className="flex-1">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
+            💰 Planejamento de Orçamento
+          </h1>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Defina seus limites para {meses[mesSelecionado]} {anoSelecionado}</p>
+        </div>
       </div>
 
-      <style jsx>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .animate-shimmer { animation: shimmer 2s infinite; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #1f2937; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #10b981, #059669); border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: linear-gradient(to bottom, #059669, #047857); }
-      `}</style>
+      <div className="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              const novoMes = mesSelecionado - 1;
+              if (novoMes < 0) {
+                setMesSelecionado(11);
+                setAnoSelecionado(anoSelecionado - 1);
+              } else {
+                setMesSelecionado(novoMes);
+              }
+            }}
+            className="bg-gray-800 hover:bg-gray-700 text-green-400 px-4 py-2 rounded-xl font-bold transition-all"
+          >
+            ← Anterior
+          </button>
+          <button
+            onClick={() => {
+              const novoMes = mesSelecionado + 1;
+              if (novoMes > 11) {
+                setMesSelecionado(0);
+                setAnoSelecionado(anoSelecionado + 1);
+              } else {
+                setMesSelecionado(novoMes);
+              }
+            }}
+            className="bg-gray-800 hover:bg-gray-700 text-green-400 px-4 py-2 rounded-xl font-bold transition-all"
+          >
+            Próximo →
+          </button>
+        </div>
+
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 px-6 py-3 rounded-xl border-2 border-green-500/30 shadow-xl">
+          <p className="text-green-400 font-black text-xl">{meses[mesSelecionado]} {anoSelecionado}</p>
+        </div>
+      </div>
+
+      <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20">
+        <div className="mb-6 md:mb-8">
+          <label className="block text-sm md:text-base font-black mb-3 md:mb-4 text-green-300 flex items-center gap-2 md:gap-3 uppercase tracking-wide">
+            <DollarSign className="w-5 h-5 md:w-6 md:h-6" />
+            Salário Mensal (R$)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={salario}
+            onChange={(e) => atualizarSalarioMesAtual(e.target.value)}
+            placeholder="Digite seu salário"
+            className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-6 py-4 md:py-5 lg:py-6 text-green-400 text-2xl md:text-3xl lg:text-4xl font-black focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all placeholder-gray-700"
+          />
+        </div>
+
+        <div className="border-t-2 border-green-500/30 pt-6 md:pt-8">
+          <h3 className="text-lg md:text-xl lg:text-2xl font-black text-green-400 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
+            <TrendingUp className="w-6 h-6 md:w-7 md:h-7" />
+            Distribuição por Categoria
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-6">
+            {categorias.map(cat => (
+              <div key={cat.key} className="bg-gradient-to-br from-black/70 to-black/50 border-2 rounded-xl md:rounded-2xl p-4 md:p-5 lg:p-6 transition-all duration-300 hover:scale-105 hover:shadow-2xl" style={{ borderColor: `${cat.cor}50` }}>
+                <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 flex items-center gap-2 md:gap-3 uppercase tracking-wide" style={{ color: cat.cor }}>
+                  <span className="text-xl md:text-2xl lg:text-3xl">{cat.icone}</span>
+                  {cat.label}
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={orcamentos[cat.key]}
+                  onChange={(e) => atualizarOrcamentoMesAtual({...orcamentos, [cat.key]: e.target.value})}
+                  placeholder="0,00"
+                  className="w-full bg-black/90 border-2 rounded-xl md:rounded-xl px-3 md:px-4 py-2 md:py-3 font-black text-base md:text-lg lg:text-xl focus:outline-none focus:ring-4 transition-all placeholder-gray-700"
+                  style={{ 
+                    borderColor: `${cat.cor}50`,
+                    color: cat.cor,
+                    '--tw-ring-color': `${cat.cor}30`
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 md:mt-8 bg-gradient-to-r from-green-900/50 to-emerald-900/30 border-2 border-green-500/50 rounded-xl md:rounded-2xl p-4 md:p-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4">
+            <div>
+              <p className="text-gray-400 text-xs md:text-sm font-bold uppercase tracking-wider mb-1">Total Planejado</p>
+              <p className="text-2xl md:text-3xl lg:text-4xl font-black text-green-400">R$ {totalOrcamento.toFixed(2)}</p>
+            </div>
+            {salarioNumerico > 0 && (
+              <div className="text-right">
+                <p className="text-xs md:text-sm text-gray-400 font-bold uppercase tracking-wider mb-1">do salário</p>
+                <p className={`text-xl md:text-2xl font-black ${totalOrcamento > salarioNumerico ? 'text-red-400' : 'text-cyan-400'}`}>
+                  {((totalOrcamento / salarioNumerico) * 100).toFixed(1)}%
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 
@@ -1275,18 +1396,7 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Registrar Gastos
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Adicione seus gastos diários de {meses[mesSelecionado]} {anoSelecionado}</p>
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-blue-900/30 via-blue-800/20 to-blue-900/30 border-2 border-blue-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
-        <div className="flex items-start gap-2 md:gap-3">
-          <AlertCircle className="text-blue-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-blue-300 text-xs md:text-sm font-bold">
-              ℹ️ Os gastos são salvos por mês. Ao mudar o mês, você verá apenas os gastos específicos daquele período.
-            </p>
-          </div>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Adicione seus gastos de {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
 
@@ -1300,7 +1410,8 @@ export default function ControleFinanceiro() {
             <div className="space-y-4 md:space-y-5 lg:space-y-6">
               <div>
                 <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 flex items-center gap-2 uppercase tracking-wide">
-                  <span className="text-base md:text-xl">📅</span> Dia do Mês
+                  <Calendar className="w-4 h-4 md:w-5 md:h-5" />
+                  Dia do Mês
                 </label>
                 <input
                   type="number"
@@ -1363,14 +1474,14 @@ export default function ControleFinanceiro() {
 
         <div className="lg:col-span-2">
           <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 md:mb-6 lg:mb-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 md:gap-4 mb-4 md:mb-6 lg:mb-8">
               <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 flex items-center gap-2 md:gap-3">
-                <span className="text-2xl md:text-3xl lg:text-4xl">📅</span>
-                <span className="hidden sm:inline">Gastos de {meses[mesSelecionado]} {anoSelecionado}</span>
-                <span className="sm:hidden">{meses[mesSelecionado]}/{anoSelecionado}</span>
+                <FileText className="text-green-400 w-7 h-7 md:w-9 md:h-9" />
+                Gastos de {meses[mesSelecionado]}
               </h2>
               {gastosDoMesAtual.length > 0 && (
-                <div className="bg-green-500/20 px-4 md:px-6 py-2 md:py-3 rounded-xl md:rounded-2xl border border-green-500/30">
+                <div className="bg-gradient-to-r from-green-600 to-emerald-600 px-3 md:px-4 py-1.5 md:py-2 rounded-lg md:rounded-xl">
+                  <p className="text-black font-black text-xs md:text-sm">{gastosDoMesAtual.length} registro{gastosDoMesAtual.length !== 1 ? 's' : ''}</p>
                   <p className="text-green-400 font-black text-sm md:text-base lg:text-lg">{gastosDoMesAtual.length} gasto{gastosDoMesAtual.length > 1 ? 's' : ''}</p>
                 </div>
               )}
@@ -1442,7 +1553,7 @@ export default function ControleFinanceiro() {
   const renderGastosFixos = () => {
     const mesAno = `${mesSelecionado}-${anoSelecionado}`;
     const totalGastosFixos = gastosFixos.reduce((acc, gf) => acc + gf.valor, 0);
-    const gastosPagos = gastosFixos.filter(gf => gf.statusMes[mesAno] === 'pago').length;
+    const gastosPagos = gastosFixos.filter(gf => gf.statusMes && gf.statusMes[mesAno] === 'pago').length;
     const gastosPendentes = gastosFixos.length - gastosPagos;
 
     return (
@@ -1461,7 +1572,7 @@ export default function ControleFinanceiro() {
             <p className="text-gray-400 text-xs md:text-sm lg:text-base">Gerencie suas despesas recorrentes</p>
           </div>
         </div>
-        
+
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div className="text-left md:text-right bg-gradient-to-br from-gray-900 to-gray-800 px-4 md:px-6 lg:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 ml-auto">
             <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Mensal</p>
@@ -1604,50 +1715,78 @@ export default function ControleFinanceiro() {
                 <div className="space-y-4">
                   {gastosFixos.map(gf => {
                     const cat = categorias.find(c => c.key === gf.categoria);
-                    const isPago = gf.statusMes[mesAno] === 'pago';
+                    const estaPago = gf.statusMes && gf.statusMes[mesAno] === 'pago';
+                    const isFaturaCartao = gf.tipo === 'fatura-cartao';
+                    
+                    // Se for fatura de cartão, calcular o valor atual da fatura
+                    const valorExibicao = isFaturaCartao && gf.cartaoId 
+                      ? calcularFaturaCartao(gf.cartaoId) 
+                      : gf.valor;
                     
                     return (
-                      <div key={gf.id} className={`bg-black/50 rounded-xl md:rounded-2xl p-4 md:p-5 border-2 transition-all duration-300 hover:scale-[1.02] ${isPago ? 'border-green-500/50' : 'border-orange-500/50'}`}>
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div key={gf.id} className={`bg-gradient-to-r from-black/70 to-black/50 border-2 rounded-xl md:rounded-2xl p-4 md:p-5 lg:p-6 transition-all hover:scale-[1.02] ${estaPago ? 'border-green-500/50' : 'border-purple-500/30'}`}>
+                        <div className="flex flex-col sm:flex-row justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-start gap-3 mb-3">
-                              <span className="text-3xl md:text-4xl">{cat.icone}</span>
-                              <div className="flex-1">
-                                <h3 className="text-lg md:text-xl font-black text-purple-400 mb-1">{gf.descricao}</h3>
-                                <div className="flex flex-wrap gap-2 text-xs md:text-sm">
-                                  <span className="px-2 py-1 rounded-lg font-bold" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `1px solid ${cat.cor}40` }}>
-                                    {cat.label}
-                                  </span>
-                                  <span className="px-2 py-1 bg-gray-800 text-gray-400 rounded-lg font-bold border border-gray-700">
-                                    📅 Dia {gf.diaVencimento}
-                                  </span>
-                                  <span className={`px-2 py-1 rounded-lg font-bold ${isPago ? 'bg-green-500/20 text-green-400 border border-green-500/40' : 'bg-orange-500/20 text-orange-400 border border-orange-500/40'}`}>
-                                    {isPago ? '✅ Pago' : '⏳ Pendente'}
-                                  </span>
-                                </div>
+                              <span className="text-2xl md:text-3xl">{cat.icone}</span>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-black text-white mb-1">{gf.descricao}</h3>
+                                <p className="text-sm text-gray-400">
+                                  <span className="font-bold" style={{ color: cat.cor }}>{cat.label}</span>
+                                  {' • '}
+                                  Vencimento: dia <span className="font-bold text-purple-400">{gf.diaVencimento}</span>
+                                </p>
                               </div>
                             </div>
-                            <div className="text-2xl md:text-3xl font-black text-purple-400 ml-12">
-                              R$ {gf.valor.toFixed(2)}
+                            
+                            <div className="flex flex-wrap items-center gap-2">
+                              {estaPago && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-500/20 text-green-400 rounded-full text-xs font-bold border border-green-500/30">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Pago em {meses[mesSelecionado]}
+                                </span>
+                              )}
+                              {isFaturaCartao && (
+                                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-bold border border-blue-500/30">
+                                  <CreditCard className="w-3 h-3" />
+                                  Fatura de Cartão
+                                </span>
+                              )}
                             </div>
                           </div>
-                          <div className="flex gap-2 md:flex-col md:gap-3">
-                            <button
-                              onClick={() => toggleStatusGastoFixo(gf.id)}
-                              className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-bold transition-all duration-300 hover:scale-105 text-sm ${
-                                isPago 
-                                  ? 'bg-orange-600 hover:bg-orange-500 text-white' 
-                                  : 'bg-green-600 hover:bg-green-500 text-white'
-                              }`}
-                            >
-                              {isPago ? '↩️ Pendente' : '✅ Marcar Pago'}
-                            </button>
-                            <button
-                              onClick={() => removerGastoFixo(gf.id)}
-                              className="flex-1 md:flex-none bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold transition-all duration-300 hover:scale-105 text-sm"
-                            >
-                              🗑️ Excluir
-                            </button>
+
+                          <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-3">
+                            <div className="text-left sm:text-right">
+                              <p className="text-xs text-gray-500 font-bold uppercase">
+                                {isFaturaCartao ? 'Fatura Atual' : 'Valor Mensal'}
+                              </p>
+                              <p className="text-2xl md:text-3xl font-black text-purple-400">R$ {valorExibicao.toFixed(2)}</p>
+                              {isFaturaCartao && valorExibicao > 0 && (
+                                <p className="text-xs text-blue-400 font-bold">Atualizado automaticamente</p>
+                              )}
+                            </div>
+
+                            <div className="flex gap-2">
+                              {!isFaturaCartao && (
+                                <button
+                                  onClick={() => toggleStatusGastoFixo(gf.id)}
+                                  className={`px-4 py-2 rounded-lg font-bold text-sm transition-all ${
+                                    estaPago
+                                      ? 'bg-green-500/20 text-green-400 border-2 border-green-500/50 hover:bg-green-500/30'
+                                      : 'bg-gray-800 text-gray-400 border-2 border-gray-700 hover:bg-gray-700'
+                                  }`}
+                                >
+                                  {estaPago ? '✓ Pago' : 'Marcar Pago'}
+                                </button>
+                              )}
+                              <button
+                                onClick={() => removerGastoFixo(gf.id)}
+                                className="p-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all border-2 border-red-500/30"
+                                title="Remover"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1662,130 +1801,6 @@ export default function ControleFinanceiro() {
     );
   };
 
-  const renderOrcamento = () => (
-    <div className="space-y-4 md:space-y-6 lg:space-y-8">
-      <div className="flex items-center gap-3 md:gap-4 mb-4">
-        <button
-          onClick={() => setMenuAberto(!menuAberto)}
-          className="bg-gradient-to-r from-green-600 to-emerald-600 text-black p-3 rounded-xl shadow-2xl shadow-green-500/50 hover:scale-110 transition-all duration-300 flex-shrink-0"
-        >
-          {menuAberto ? <X size={24} /> : <Menu size={24} />}
-        </button>
-        <div className="flex-1">
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
-            Orçamento Mensal
-          </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Configure seu salário e orçamento independente para cada mês</p>
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-cyan-900/30 via-cyan-800/20 to-cyan-900/30 border-2 border-cyan-500/40 rounded-xl md:rounded-2xl p-3 md:p-4 shadow-lg">
-        <div className="flex items-start gap-2 md:gap-3">
-          <DollarSign className="text-cyan-400 w-5 h-5 md:w-6 md:h-6 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-cyan-300 text-xs md:text-sm font-bold">
-ℹ️ Cada mês pode ter seu próprio salário e orçamento independentes. Ao mudar o mês/ano, você pode definir valores diferentes.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
-        <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/20">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
-            <span className="text-2xl md:text-3xl lg:text-4xl">⚙️</span>
-            Configurações
-          </h2>
-          <div className="space-y-4 md:space-y-5 lg:space-y-6">
-            <div>
-              <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 uppercase tracking-wide">💰 Salário Mensal</label>
-              <input
-                type="number"
-                value={salario}
-                onChange={(e) => atualizarSalarioMesAtual(e.target.value)}
-                placeholder="Digite seu salário"
-                className="w-full bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-4 md:px-5 lg:px-6 py-3 md:py-4 lg:py-5 text-green-400 text-xl md:text-2xl lg:text-3xl font-black focus:outline-none focus:border-green-400 focus:ring-4 focus:ring-green-400/30 transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-xs md:text-sm font-black mb-2 md:mb-3 text-green-300 uppercase tracking-wide">📅 Período</label>
-              <div className="grid grid-cols-2 gap-3 md:gap-4">
-                <select
-                  value={mesSelecionado}
-                  onChange={(e) => setMesSelecionado(parseInt(e.target.value))}
-                  className="bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-3 md:px-4 lg:px-5 py-3 md:py-4 text-green-400 font-bold focus:outline-none focus:border-green-400 transition-all text-sm md:text-base"
-                >
-                  {meses.map((mes, idx) => (
-                    <option key={idx} value={idx}>{mes}</option>
-                  ))}
-                </select>
-                <input
-                  type="number"
-                  value={anoSelecionado}
-                  onChange={(e) => setAnoSelecionado(parseInt(e.target.value))}
-                  className="bg-black/70 border-2 border-green-600/50 rounded-xl md:rounded-2xl px-3 md:px-4 lg:px-5 py-3 md:py-4 text-green-400 font-bold focus:outline-none focus:border-green-400 transition-all text-sm md:text-base"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
-            <span className="text-2xl md:text-3xl lg:text-4xl">📊</span>
-            Resumo
-          </h2>
-          <div className="space-y-3 md:space-y-4">
-            <div className="flex justify-between items-center p-4 md:p-5 lg:p-6 bg-gradient-to-r from-green-900/50 to-green-800/30 rounded-xl md:rounded-2xl border-2 border-green-500/30 shadow-lg">
-              <span className="text-gray-300 font-bold text-sm md:text-base lg:text-lg">Salário</span>
-              <span className="text-green-400 font-black text-xl md:text-2xl lg:text-3xl">R$ {salarioNumerico.toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between items-center p-4 md:p-5 lg:p-6 bg-gradient-to-r from-blue-900/50 to-blue-800/30 rounded-xl md:rounded-2xl border-2 border-blue-500/30 shadow-lg">
-              <span className="text-gray-300 font-bold text-sm md:text-base lg:text-lg">Orçado</span>
-              <span className="text-blue-400 font-black text-xl md:text-2xl lg:text-3xl">R$ {totalOrcamento.toFixed(2)}</span>
-            </div>
-            <div className={`flex justify-between items-center p-4 md:p-5 lg:p-6 bg-gradient-to-r rounded-xl md:rounded-2xl border-2 shadow-lg ${(salarioNumerico - totalOrcamento) >= 0 ? 'from-green-900/50 to-green-800/30 border-green-500/30' : 'from-orange-900/50 to-orange-800/30 border-orange-500/30'}`}>
-              <span className="text-gray-300 font-bold text-sm md:text-base lg:text-lg">Disponível</span>
-              <span className={`font-black text-xl md:text-2xl lg:text-3xl ${(salarioNumerico - totalOrcamento) >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
-                R$ {(salarioNumerico - totalOrcamento).toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 border-green-500/30 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl shadow-green-500/10">
-        <h2 className="text-xl md:text-2xl lg:text-3xl font-black text-green-400 mb-4 md:mb-6 lg:mb-8 flex items-center gap-2 md:gap-3">
-          <span className="text-2xl md:text-3xl lg:text-4xl">💵</span>
-          Orçamento por Categoria
-        </h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 lg:gap-6">
-          {categorias.map(cat => (
-            <div key={cat.key} className="bg-black/50 rounded-xl md:rounded-2xl p-4 md:p-5 lg:p-6 border-l-4 hover:bg-black/70 transition-all duration-300 hover:scale-105 shadow-lg" style={{ borderColor: cat.cor }}>
-              <label className="block font-black mb-3 md:mb-4 text-base md:text-lg lg:text-xl flex items-center gap-2 md:gap-3" style={{ color: cat.cor }}>
-                <span className="text-2xl md:text-2xl lg:text-3xl">{cat.icone}</span>
-                {cat.label}
-              </label>
-              <input
-                type="number"
-                value={orcamentos[cat.key]}
-                onChange={(e) => atualizarOrcamentoMesAtual({...orcamentos, [cat.key]: e.target.value})}
-                placeholder="R$ 0,00"
-                className="w-full bg-gray-900/70 border-2 rounded-xl px-3 md:px-4 py-3 md:py-4 text-green-400 font-bold text-base md:text-lg focus:outline-none focus:ring-2 transition-all"
-                style={{ borderColor: cat.cor, '--tw-ring-color': cat.cor }}
-              />
-              {orcamentos[cat.key] && salarioNumerico > 0 && (
-                <div className="mt-3 md:mt-4 text-xs font-bold px-2 md:px-3 py-1 md:py-2 rounded-lg md:rounded-xl inline-block" style={{ color: cat.cor, backgroundColor: `${cat.cor}20`, border: `1px solid ${cat.cor}40` }}>
-                  {((parseFloat(orcamentos[cat.key]) / salarioNumerico) * 100).toFixed(1)}% do salário
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
   const renderAnalises = () => (
     <div className="space-y-4 md:space-y-6 lg:space-y-8">
       <div className="flex items-center gap-3 md:gap-4 mb-4">
@@ -1799,68 +1814,68 @@ export default function ControleFinanceiro() {
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-black bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400 bg-clip-text text-transparent mb-1">
             Análises Detalhadas
           </h1>
-          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Desempenho de {meses[mesSelecionado]} {anoSelecionado}</p>
+          <p className="text-gray-400 text-xs md:text-sm lg:text-base">Insights sobre {meses[mesSelecionado]} {anoSelecionado}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {categorias.map(cat => {
           const orcamento = parseFloat(orcamentos[cat.key]) || 0;
           const gasto = gastosReais[cat.key] || 0;
           const restante = orcamento - gasto;
-          const percentual = orcamento > 0 ? (gasto / orcamento * 100) : 0;
+          const percentual = orcamento > 0 ? (gasto / orcamento) * 100 : 0;
           const gastosCategoria = gastosDoMesAtual.filter(g => g.categoria === cat.key);
 
-          if (orcamento === 0 && gasto === 0) return null;
-
           return (
-            <div key={cat.key} className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 shadow-2xl hover:scale-[1.02] transition-all duration-500" style={{ borderColor: `${cat.cor}80`, boxShadow: `0 25px 60px ${cat.cor}20` }}>
-              <div className="flex items-center justify-between mb-4 md:mb-5 lg:mb-6">
-                <h2 className="text-2xl md:text-3xl lg:text-4xl font-black flex items-center gap-2 md:gap-3 lg:gap-4" style={{ color: cat.cor }}>
-                  <span className="text-3xl md:text-4xl lg:text-5xl">{cat.icone}</span>
-                  {cat.label}
-                </h2>
-                <div className="text-right">
-                  <div className={`text-3xl md:text-4xl lg:text-5xl font-black ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
-                    {percentual.toFixed(0)}%
+            <div 
+              key={cat.key} 
+              className="bg-gradient-to-br from-gray-900/70 to-gray-800/50 backdrop-blur-sm border-2 rounded-2xl md:rounded-3xl p-4 md:p-6 shadow-2xl hover:scale-105 transition-all duration-300"
+              style={{ borderColor: `${cat.cor}50` }}
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <span className="text-3xl md:text-4xl">{cat.icone}</span>
+                <div className="flex-1">
+                  <h3 className="font-black text-lg md:text-xl" style={{ color: cat.cor }}>{cat.label}</h3>
+                  <p className="text-xs text-gray-500 font-bold">{gastosCategoria.length} gasto{gastosCategoria.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400 font-bold">Orçado</span>
+                    <span className="text-blue-400 font-black">R$ {orcamento.toFixed(2)}</span>
                   </div>
-                  <div className="text-xs text-gray-500 font-bold uppercase">Utilizado</div>
-                </div>
-              </div>
-
-              <div className="mb-4 md:mb-5 lg:mb-6">
-                <div className="bg-gray-800 rounded-full h-6 md:h-8 lg:h-10 overflow-hidden shadow-inner">
-                  <div 
-                    className="h-6 md:h-8 lg:h-10 rounded-full transition-all duration-700 flex items-center justify-center text-xs md:text-sm font-black text-black shadow-2xl" 
-                    style={{ 
-                      width: `${Math.min(percentual, 100)}%`, 
-                      backgroundColor: percentual > 100 ? '#f59e0b' : cat.cor,
-                      boxShadow: `0 0 25px ${percentual > 100 ? '#f59e0b' : cat.cor}`
-                    }}
-                  >
-                    {percentual > 25 && `${percentual.toFixed(0)}%`}
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400 font-bold">Gasto</span>
+                    <span className="text-red-400 font-black">R$ {gasto.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-400 font-bold">Restante</span>
+                    <span className={`font-black ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
+                      R$ {Math.abs(restante).toFixed(2)}
+                    </span>
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-3 gap-2 md:gap-3 lg:gap-4 mb-4 md:mb-5 lg:mb-6">
-                <div className="bg-black/70 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 text-center border-2 border-blue-500/30 shadow-lg">
-                  <p className="text-gray-400 text-xs mb-1 md:mb-2 font-black uppercase">Orçado</p>
-                  <p className="text-blue-400 font-black text-sm md:text-base lg:text-xl">R$ {orcamento.toFixed(2)}</p>
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-xs text-gray-500 font-bold">Utilização</span>
+                    <span className={`text-sm font-black ${percentual >= 100 ? 'text-red-400' : percentual >= 80 ? 'text-orange-400' : 'text-green-400'}`}>
+                      {percentual.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-800 rounded-full h-3">
+                    <div 
+                      className="h-3 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${Math.min(percentual, 100)}%`,
+                        backgroundColor: cat.cor
+                      }}
+                    ></div>
+                  </div>
                 </div>
-                <div className="bg-black/70 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 text-center border-2 border-red-500/30 shadow-lg">
-                  <p className="text-gray-400 text-xs mb-1 md:mb-2 font-black uppercase">Gasto</p>
-                  <p className="text-red-400 font-black text-sm md:text-base lg:text-xl">R$ {gasto.toFixed(2)}</p>
-                </div>
-                <div className={`bg-black/70 rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 text-center border-2 shadow-lg ${restante >= 0 ? 'border-green-500/30' : 'border-orange-500/30'}`}>
-                  <p className="text-gray-400 text-xs mb-1 md:mb-2 font-black uppercase">Restante</p>
-                  <p className={`font-black text-sm md:text-base lg:text-xl ${restante >= 0 ? 'text-green-400' : 'text-orange-400'}`}>
-                    R$ {Math.abs(restante).toFixed(2)}
-                  </p>
-                </div>
-              </div>
 
-              <div className={`rounded-xl md:rounded-2xl p-3 md:p-4 lg:p-5 mb-4 border-l-4 ${restante > 0 && percentual < 50 ? 'bg-green-900/30 border-green-500' : restante > 0 && percentual < 80 ? 'bg-yellow-900/30 border-yellow-500' : restante > 0 ? 'bg-orange-900/30 border-orange-500' : 'bg-red-900/30 border-red-500'}`}>
                 {restante > 0 && percentual < 50 && (
                   <p className="text-green-400 font-bold flex items-center gap-2 md:gap-3 text-sm md:text-base lg:text-lg">
                     <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />
@@ -2074,7 +2089,7 @@ export default function ControleFinanceiro() {
             <X className="w-6 h-6 md:w-7 md:h-7" />
           </button>
         </div>
-        
+
         <nav className="flex-1 p-4 md:p-5 space-y-2 md:space-y-3 overflow-y-auto custom-scrollbar">
           {menuItems.map(item => {
             const Icon = item.icon;
