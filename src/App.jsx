@@ -343,31 +343,52 @@ export default function ControleFinanceiro() {
     salvarDados();
   };
 
-  // FUNÇÃO CORRIGIDA PARA MOBILE
-  const adicionarGastoCartao = (e) => {
+  // FUNÇÃO COMPLETAMENTE REFEITA PARA MOBILE
+  const adicionarGastoCartao = async (e) => {
     e.preventDefault();
     e.stopPropagation();
     
-    console.log('Tentando adicionar gasto ao cartão:', novoGastoCartao);
+    console.log('=== INICIANDO ADIÇÃO DE GASTO ===');
+    console.log('Estado atual gastosCartao:', gastosCartao);
+    console.log('Dados do formulário:', novoGastoCartao);
     
-    if (novoGastoCartao.cartaoId && novoGastoCartao.descricao && novoGastoCartao.valor) {
-      const gasto = {
-        ...novoGastoCartao,
+    // Validação
+    if (!novoGastoCartao.cartaoId) {
+      alert('Selecione um cartão!');
+      return;
+    }
+    if (!novoGastoCartao.descricao || novoGastoCartao.descricao.trim() === '') {
+      alert('Preencha a descrição!');
+      return;
+    }
+    if (!novoGastoCartao.valor || parseFloat(novoGastoCartao.valor) <= 0) {
+      alert('Preencha um valor válido!');
+      return;
+    }
+    
+    try {
+      // Criar o novo gasto
+      const novoGasto = {
         id: Date.now(),
+        cartaoId: novoGastoCartao.cartaoId,
+        descricao: novoGastoCartao.descricao.trim(),
         valor: parseFloat(novoGastoCartao.valor),
+        data: novoGastoCartao.data,
+        categoria: novoGastoCartao.categoria,
         parcelas: parseInt(novoGastoCartao.parcelas) || 1
       };
       
-      console.log('Gasto criado:', gasto);
+      console.log('Novo gasto criado:', novoGasto);
       
-      // Atualiza o estado e salva imediatamente
-      const novosGastosCartao = [...gastosCartao, gasto];
-      console.log('Total de gastos após adicionar:', novosGastosCartao.length);
+      // Criar array atualizado
+      const gastosAtualizados = [...gastosCartao, novoGasto];
+      console.log('Array de gastos atualizado:', gastosAtualizados);
       
-      setGastosCartao(novosGastosCartao);
+      // Atualizar estado
+      setGastosCartao(gastosAtualizados);
       
-      // Salva no localStorage imediatamente
-      const dadosParaSalvar = {
+      // Preparar dados completos para salvar
+      const todosOsDados = {
         mesSelecionado,
         anoSelecionado,
         salariosPorMes,
@@ -375,13 +396,21 @@ export default function ControleFinanceiro() {
         gastosDiarios,
         gastosFixos,
         cartoes,
-        gastosCartao: novosGastosCartao
+        gastosCartao: gastosAtualizados
       };
-      localStorage.setItem('controleFinanceiro', JSON.stringify(dadosParaSalvar));
-      console.log('Dados salvos no localStorage. Total de gastos:', novosGastosCartao.length);
       
+      // Salvar no localStorage
+      localStorage.setItem('controleFinanceiro', JSON.stringify(todosOsDados));
+      console.log('Salvou no localStorage!');
+      
+      // Verificar se salvou
+      const verificacao = localStorage.getItem('controleFinanceiro');
+      const dadosSalvos = JSON.parse(verificacao);
+      console.log('Verificação - Total de gastos salvos:', dadosSalvos.gastosCartao.length);
+      
+      // Limpar formulário
       setNovoGastoCartao({
-        cartaoId: '',
+        cartaoId: cartoes[0]?.id || '',
         descricao: '',
         valor: '',
         data: new Date().toISOString().split('T')[0],
@@ -389,11 +418,18 @@ export default function ControleFinanceiro() {
         parcelas: 1
       });
       
+      // Fechar modal
       setModalGastoCartaoAberto(false);
+      
+      // Mostrar feedback
       setMostrarSalvo(true);
       setTimeout(() => setMostrarSalvo(false), 2000);
-    } else {
-      alert('Por favor, preencha todos os campos obrigatórios!');
+      
+      console.log('=== GASTO ADICIONADO COM SUCESSO ===');
+      
+    } catch (error) {
+      console.error('ERRO ao adicionar gasto:', error);
+      alert('Erro ao salvar gasto: ' + error.message);
     }
   };
 
@@ -1281,44 +1317,45 @@ export default function ControleFinanceiro() {
           </div>
         </div>
 
-        {/* MODAL DE CARTÃO CORRIGIDO */}
+        {/* MODAL DE CARTÃO - VERSÃO SIMPLIFICADA MOBILE */}
         {modalCartaoAberto && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20 relative">
+          <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl relative">
               <button
+                type="button"
                 onClick={() => {
                   setModalCartaoAberto(false);
                   setEditandoCartao(null);
                 }}
-                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white transition-colors"
+                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white z-10"
               >
                 <X className="w-5 h-5" />
               </button>
               
-              <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
+              <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6 pr-8">
                 {editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}
               </h2>
               
               <form onSubmit={salvarCartao} className="space-y-4">
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Nome do Cartão</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Nome do Cartão *</label>
                   <input
                     type="text"
                     value={novoCartao.nome}
                     onChange={(e) => setNovoCartao({...novoCartao, nome: e.target.value})}
                     placeholder="Ex: Nubank, Itaú..."
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Dia Vencimento</label>
+                    <label className="block text-sm font-bold text-green-400 mb-2">Dia Vencimento</label>
                     <select
                       value={novoCartao.diaVencimento}
                       onChange={(e) => setNovoCartao({...novoCartao, diaVencimento: Number(e.target.value)})}
-                      className="w-full px-2 md:px-3 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                      className="w-full px-3 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     >
                       {Array.from({length: 31}, (_, i) => i + 1).map(dia => (
                         <option key={dia} value={dia}>{dia}</option>
@@ -1327,11 +1364,11 @@ export default function ControleFinanceiro() {
                   </div>
 
                   <div>
-                    <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Dia Fechamento</label>
+                    <label className="block text-sm font-bold text-green-400 mb-2">Dia Fechamento</label>
                     <select
                       value={novoCartao.diaFechamento}
                       onChange={(e) => setNovoCartao({...novoCartao, diaFechamento: Number(e.target.value)})}
-                      className="w-full px-2 md:px-3 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                      className="w-full px-3 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     >
                       {Array.from({length: 31}, (_, i) => i + 1).map(dia => (
                         <option key={dia} value={dia}>{dia}</option>
@@ -1341,7 +1378,7 @@ export default function ControleFinanceiro() {
                 </div>
 
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Limite (R$)</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Limite (R$) *</label>
                   <input
                     type="number"
                     step="0.01"
@@ -1349,25 +1386,25 @@ export default function ControleFinanceiro() {
                     onChange={(e) => setNovoCartao({...novoCartao, limite: e.target.value})}
                     placeholder="0.00"
                     inputMode="decimal"
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     required
                   />
                 </div>
 
-                <div className="flex gap-3 md:gap-4 pt-2">
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => {
                       setModalCartaoAberto(false);
                       setEditandoCartao(null);
                     }}
-                    className="flex-1 py-3 md:py-4 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-all min-h-[48px] touch-manipulation"
+                    className="flex-1 py-4 rounded-xl bg-gray-700 text-white font-bold min-h-[52px]"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold hover:from-green-500 hover:to-emerald-500 transition-all shadow-lg min-h-[48px] touch-manipulation"
+                    className="flex-1 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold shadow-lg min-h-[52px]"
                   >
                     {editandoCartao ? 'Atualizar' : 'Salvar'}
                   </button>
@@ -1377,28 +1414,29 @@ export default function ControleFinanceiro() {
           </div>
         )}
 
-        {/* MODAL DE GASTO DO CARTÃO CORRIGIDO PARA MOBILE */}
+        {/* MODAL DE GASTO DO CARTÃO - VERSÃO SIMPLIFICADA MOBILE */}
         {modalGastoCartaoAberto && (
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20 relative">
+          <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl relative">
               <button
+                type="button"
                 onClick={() => setModalGastoCartaoAberto(false)}
-                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white transition-colors"
+                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white z-10"
               >
                 <X className="w-5 h-5" />
               </button>
               
-              <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
+              <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6 pr-8">
                 Novo Gasto no Cartão
               </h2>
               
               <form onSubmit={adicionarGastoCartao} className="space-y-4">
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Cartão</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Cartão *</label>
                   <select
                     value={novoGastoCartao.cartaoId}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, cartaoId: e.target.value})}
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     required
                   >
                     {cartoes.map(cartao => (
@@ -1408,11 +1446,11 @@ export default function ControleFinanceiro() {
                 </div>
 
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Categoria</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Categoria</label>
                   <select
                     value={novoGastoCartao.categoria}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, categoria: e.target.value})}
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                   >
                     {categorias.map(cat => (
                       <option key={cat.key} value={cat.key}>
@@ -1423,20 +1461,20 @@ export default function ControleFinanceiro() {
                 </div>
 
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Descrição</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Descrição *</label>
                   <input
                     type="text"
                     value={novoGastoCartao.descricao}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, descricao: e.target.value})}
-                    placeholder="Ex: Compra na Amazon..."
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    placeholder="Ex: Compra no supermercado"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     required
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 md:gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Valor (R$)</label>
+                    <label className="block text-sm font-bold text-green-400 mb-2">Valor (R$) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -1444,17 +1482,17 @@ export default function ControleFinanceiro() {
                       onChange={(e) => setNovoGastoCartao({...novoGastoCartao, valor: e.target.value})}
                       placeholder="0.00"
                       inputMode="decimal"
-                      className="w-full px-2 md:px-3 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                      className="w-full px-3 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Parcelas</label>
+                    <label className="block text-sm font-bold text-green-400 mb-2">Parcelas</label>
                     <select
                       value={novoGastoCartao.parcelas}
                       onChange={(e) => setNovoGastoCartao({...novoGastoCartao, parcelas: Number(e.target.value)})}
-                      className="w-full px-2 md:px-3 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                      className="w-full px-3 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     >
                       {Array.from({length: 12}, (_, i) => i + 1).map(num => (
                         <option key={num} value={num}>{num}x</option>
@@ -1464,27 +1502,27 @@ export default function ControleFinanceiro() {
                 </div>
 
                 <div>
-                  <label className="block text-sm md:text-base font-bold text-green-400 mb-2">Data da Compra</label>
+                  <label className="block text-sm font-bold text-green-400 mb-2">Data da Compra</label>
                   <input
                     type="date"
                     value={novoGastoCartao.data}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, data: e.target.value})}
-                    className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
+                    className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
                     required
                   />
                 </div>
 
-                <div className="flex gap-3 md:gap-4 pt-2">
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setModalGastoCartaoAberto(false)}
-                    className="flex-1 py-3 md:py-4 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-all min-h-[48px] touch-manipulation"
+                    className="flex-1 py-4 rounded-xl bg-gray-700 text-white font-bold min-h-[52px]"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 py-3 md:py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold hover:from-green-500 hover:to-emerald-500 transition-all shadow-lg min-h-[48px] touch-manipulation"
+                    className="flex-1 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold shadow-lg min-h-[52px]"
                   >
                     Adicionar
                   </button>
