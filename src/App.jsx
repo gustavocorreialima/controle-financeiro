@@ -362,6 +362,8 @@ export default function ControleFinanceiro() {
       
       // Atualiza o estado e salva imediatamente
       const novosGastosCartao = [...gastosCartao, gasto];
+      console.log('Total de gastos após adicionar:', novosGastosCartao.length);
+      
       setGastosCartao(novosGastosCartao);
       
       // Salva no localStorage imediatamente
@@ -376,7 +378,7 @@ export default function ControleFinanceiro() {
         gastosCartao: novosGastosCartao
       };
       localStorage.setItem('controleFinanceiro', JSON.stringify(dadosParaSalvar));
-      console.log('Dados salvos no localStorage:', dadosParaSalvar);
+      console.log('Dados salvos no localStorage. Total de gastos:', novosGastosCartao.length);
       
       setNovoGastoCartao({
         cartaoId: '',
@@ -1062,30 +1064,23 @@ export default function ControleFinanceiro() {
       return acc + calcularFaturaCartao(cartao.id);
     }, 0);
 
+    console.log('=== RENDERIZANDO FATURA CARTÃO ===');
+    console.log('Total de gastos no estado:', gastosCartao.length);
+    console.log('Mês selecionado:', mesSelecionado, '- Ano:', anoSelecionado);
+    
+    // FILTRO SIMPLIFICADO: Mostra TODOS os gastos do mês/ano selecionado
     const gastosDoMes = gastosCartao.filter(gasto => {
       const dataGasto = new Date(gasto.data);
-      const cartao = cartoes.find(c => c.id === gasto.cartaoId);
-      
-      if (!cartao) return false;
-
-      const diaFechamento = cartao.diaFechamento;
       const mesGasto = dataGasto.getMonth();
       const anoGasto = dataGasto.getFullYear();
-      const diaGasto = dataGasto.getDate();
-
-      let mesReferencia = mesGasto;
-      let anoReferencia = anoGasto;
-
-      if (diaGasto > diaFechamento) {
-        mesReferencia += 1;
-        if (mesReferencia > 11) {
-          mesReferencia = 0;
-          anoReferencia += 1;
-        }
-      }
-
-      return mesReferencia === mesSelecionado && anoReferencia === anoSelecionado;
+      
+      const match = mesGasto === mesSelecionado && anoGasto === anoSelecionado;
+      console.log(`Gasto: ${gasto.descricao} - Data: ${gasto.data} - Mês: ${mesGasto} - Ano: ${anoGasto} - Match: ${match}`);
+      
+      return match;
     });
+    
+    console.log('Gastos filtrados para o mês:', gastosDoMes.length);
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
