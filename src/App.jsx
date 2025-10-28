@@ -474,7 +474,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -625,7 +625,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -794,7 +794,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -940,7 +940,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -1116,7 +1116,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -1557,7 +1557,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
@@ -1701,7 +1701,7 @@ export default function ControleFinanceiro() {
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
-        <div className="flex items-center justify-between mb-4 md:mb-6 lg:mb-8">
+        <div className="flex items-center gap-4 mb-4 md:mb-6 lg:mb-8">
           <button
             onClick={() => setMenuAberto(true)}
             className="p-3 md:p-4 rounded-xl md:rounded-2xl bg-gradient-to-r from-green-600 to-emerald-600 text-black hover:from-green-500 hover:to-emerald-500 transition-all hover:scale-105 shadow-xl shadow-green-500/50"
