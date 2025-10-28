@@ -1283,16 +1283,18 @@ export default function ControleFinanceiro() {
 
         {/* MODAL DE CARTÃO CORRIGIDO */}
         {modalCartaoAberto && (
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) {
-                setModalCartaoAberto(false);
-                setEditandoCartao(null);
-              }
-            }}
-          >
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20 relative">
+              <button
+                onClick={() => {
+                  setModalCartaoAberto(false);
+                  setEditandoCartao(null);
+                }}
+                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
               <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
                 {editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}
               </h2>
@@ -1307,7 +1309,6 @@ export default function ControleFinanceiro() {
                     placeholder="Ex: Nubank, Itaú..."
                     className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                     required
-                    autoFocus
                   />
                 </div>
 
@@ -1347,6 +1348,7 @@ export default function ControleFinanceiro() {
                     value={novoCartao.limite}
                     onChange={(e) => setNovoCartao({...novoCartao, limite: e.target.value})}
                     placeholder="0.00"
+                    inputMode="decimal"
                     className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                     required
                   />
@@ -1355,8 +1357,7 @@ export default function ControleFinanceiro() {
                 <div className="flex gap-3 md:gap-4 pt-2">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
+                    onClick={() => {
                       setModalCartaoAberto(false);
                       setEditandoCartao(null);
                     }}
@@ -1378,15 +1379,15 @@ export default function ControleFinanceiro() {
 
         {/* MODAL DE GASTO DO CARTÃO CORRIGIDO PARA MOBILE */}
         {modalGastoCartaoAberto && (
-          <div 
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-            onMouseDown={(e) => {
-              if (e.target === e.currentTarget) {
-                setModalGastoCartaoAberto(false);
-              }
-            }}
-          >
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20">
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20 relative">
+              <button
+                onClick={() => setModalGastoCartaoAberto(false)}
+                className="absolute top-3 right-3 p-2 text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
               <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
                 Novo Gasto no Cartão
               </h2>
@@ -1430,7 +1431,6 @@ export default function ControleFinanceiro() {
                     placeholder="Ex: Compra na Amazon..."
                     className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                     required
-                    autoFocus
                   />
                 </div>
 
@@ -1443,6 +1443,7 @@ export default function ControleFinanceiro() {
                       value={novoGastoCartao.valor}
                       onChange={(e) => setNovoGastoCartao({...novoGastoCartao, valor: e.target.value})}
                       placeholder="0.00"
+                      inputMode="decimal"
                       className="w-full px-2 md:px-3 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                       required
                     />
@@ -1476,10 +1477,7 @@ export default function ControleFinanceiro() {
                 <div className="flex gap-3 md:gap-4 pt-2">
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setModalGastoCartaoAberto(false);
-                    }}
+                    onClick={() => setModalGastoCartaoAberto(false)}
                     className="flex-1 py-3 md:py-4 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-all min-h-[48px] touch-manipulation"
                   >
                     Cancelar
