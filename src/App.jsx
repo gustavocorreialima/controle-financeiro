@@ -26,6 +26,7 @@ export default function ControleFinanceiro() {
   const [mostrarSalvo, setMostrarSalvo] = useState(false);
   const [cartoes, setCartoes] = useState([]);
   const [gastosCartao, setGastosCartao] = useState([]);
+  const [forceUpdate, setForceUpdate] = useState(0); // FORÇA RE-RENDER
   const [modalCartaoAberto, setModalCartaoAberto] = useState(false);
   const [modalGastoCartaoAberto, setModalGastoCartaoAberto] = useState(false);
   const [editandoCartao, setEditandoCartao] = useState(null);
@@ -295,35 +296,46 @@ export default function ControleFinanceiro() {
   };
 
   const salvarCartao = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    if (e && e.preventDefault) e.preventDefault();
+    if (e && e.stopPropagation) e.stopPropagation();
     
-    if (novoCartao.nome && novoCartao.limite) {
-      if (editandoCartao) {
-        setCartoes(cartoes.map(c => 
-          c.id === editandoCartao.id 
-            ? { ...novoCartao, id: editandoCartao.id, limite: parseFloat(novoCartao.limite) }
-            : c
-        ));
-      } else {
-        const cartao = {
-          ...novoCartao,
-          id: Date.now(),
-          limite: parseFloat(novoCartao.limite)
-        };
-        setCartoes([...cartoes, cartao]);
-      }
-      
-      setNovoCartao({
-        nome: '',
-        diaVencimento: 1,
-        diaFechamento: 1,
-        limite: ''
-      });
-      setEditandoCartao(null);
-      setModalCartaoAberto(false);
-      salvarDados();
+    console.log('=== SALVANDO CARTÃO ===');
+    console.log('Dados do cartão:', novoCartao);
+    
+    if (!novoCartao.nome || !novoCartao.limite) {
+      alert('Preencha o nome e o limite do cartão!');
+      return;
     }
+    
+    if (editandoCartao) {
+      // Editando
+      setCartoes(cartoes.map(c => 
+        c.id === editandoCartao.id 
+          ? { ...novoCartao, id: editandoCartao.id, limite: parseFloat(novoCartao.limite) }
+          : c
+      ));
+    } else {
+      // Novo cartão
+      const cartao = {
+        ...novoCartao,
+        id: Date.now(),
+        limite: parseFloat(novoCartao.limite)
+      };
+      setCartoes([...cartoes, cartao]);
+      console.log('Cartão criado:', cartao);
+    }
+    
+    setNovoCartao({
+      nome: '',
+      diaVencimento: 1,
+      diaFechamento: 1,
+      limite: ''
+    });
+    setEditandoCartao(null);
+    setModalCartaoAberto(false);
+    salvarDados();
+    
+    console.log('=== CARTÃO SALVO ===');
   };
 
   const editarCartao = (cartao) => {
@@ -343,94 +355,81 @@ export default function ControleFinanceiro() {
     salvarDados();
   };
 
-  // FUNÇÃO COMPLETAMENTE REFEITA PARA MOBILE
-  const adicionarGastoCartao = async (e) => {
+  // VERSÃO ULTRA SIMPLIFICADA - FORÇA ATUALIZAÇÃO
+  const adicionarGastoCartao = (e) => {
     e.preventDefault();
-    e.stopPropagation();
     
-    console.log('=== INICIANDO ADIÇÃO DE GASTO ===');
-    console.log('Estado atual gastosCartao:', gastosCartao);
-    console.log('Dados do formulário:', novoGastoCartao);
+    console.log('=== INÍCIO ADICIONAR GASTO ===');
+    console.log('Formulário completo:', novoGastoCartao);
+    console.log('CartaoId selecionado:', novoGastoCartao.cartaoId);
+    console.log('Gastos atuais:', gastosCartao.length);
     
-    // Validação
-    if (!novoGastoCartao.cartaoId) {
-      alert('Selecione um cartão!');
-      return;
-    }
-    if (!novoGastoCartao.descricao || novoGastoCartao.descricao.trim() === '') {
-      alert('Preencha a descrição!');
-      return;
-    }
-    if (!novoGastoCartao.valor || parseFloat(novoGastoCartao.valor) <= 0) {
-      alert('Preencha um valor válido!');
+    // Validação básica
+    if (!novoGastoCartao.cartaoId || !novoGastoCartao.descricao || !novoGastoCartao.valor) {
+      alert('Preencha todos os campos obrigatórios!');
       return;
     }
     
-    try {
-      // Criar o novo gasto
-      const novoGasto = {
-        id: Date.now(),
-        cartaoId: novoGastoCartao.cartaoId,
-        descricao: novoGastoCartao.descricao.trim(),
-        valor: parseFloat(novoGastoCartao.valor),
-        data: novoGastoCartao.data,
-        categoria: novoGastoCartao.categoria,
-        parcelas: parseInt(novoGastoCartao.parcelas) || 1
-      };
+    // Criar gasto
+    const gasto = {
+      id: Date.now(),
+      cartaoId: novoGastoCartao.cartaoId,
+      descricao: novoGastoCartao.descricao,
+      valor: parseFloat(novoGastoCartao.valor),
+      data: novoGastoCartao.data,
+      categoria: novoGastoCartao.categoria,
+      parcelas: parseInt(novoGastoCartao.parcelas)
+    };
+    
+    console.log('Gasto criado:', gasto);
+    console.log('Cartão do gasto:', cartoes.find(c => c.id === gasto.cartaoId)?.nome);
+    
+    // Atualizar estado COM CALLBACK
+    setGastosCartao(gastosAntigos => {
+      const novosGastos = [...gastosAntigos, gasto];
+      console.log('Novos gastos (dentro do setState):', novosGastos.length);
+      console.log('Último gasto adicionado:', novosGastos[novosGastos.length - 1]);
       
-      console.log('Novo gasto criado:', novoGasto);
+      // Salvar DENTRO do callback
+      setTimeout(() => {
+        const dados = {
+          mesSelecionado,
+          anoSelecionado,
+          salariosPorMes,
+          orcamentosPorMes,
+          gastosDiarios,
+          gastosFixos,
+          cartoes,
+          gastosCartao: novosGastos
+        };
+        localStorage.setItem('controleFinanceiro', JSON.stringify(dados));
+        console.log('✅ Salvou no localStorage:', novosGastos.length, 'gastos');
+      }, 0);
       
-      // Criar array atualizado
-      const gastosAtualizados = [...gastosCartao, novoGasto];
-      console.log('Array de gastos atualizado:', gastosAtualizados);
-      
-      // Atualizar estado
-      setGastosCartao(gastosAtualizados);
-      
-      // Preparar dados completos para salvar
-      const todosOsDados = {
-        mesSelecionado,
-        anoSelecionado,
-        salariosPorMes,
-        orcamentosPorMes,
-        gastosDiarios,
-        gastosFixos,
-        cartoes,
-        gastosCartao: gastosAtualizados
-      };
-      
-      // Salvar no localStorage
-      localStorage.setItem('controleFinanceiro', JSON.stringify(todosOsDados));
-      console.log('Salvou no localStorage!');
-      
-      // Verificar se salvou
-      const verificacao = localStorage.getItem('controleFinanceiro');
-      const dadosSalvos = JSON.parse(verificacao);
-      console.log('Verificação - Total de gastos salvos:', dadosSalvos.gastosCartao.length);
-      
-      // Limpar formulário
-      setNovoGastoCartao({
-        cartaoId: cartoes[0]?.id || '',
-        descricao: '',
-        valor: '',
-        data: new Date().toISOString().split('T')[0],
-        categoria: 'outros',
-        parcelas: 1
-      });
-      
-      // Fechar modal
-      setModalGastoCartaoAberto(false);
-      
-      // Mostrar feedback
-      setMostrarSalvo(true);
-      setTimeout(() => setMostrarSalvo(false), 2000);
-      
-      console.log('=== GASTO ADICIONADO COM SUCESSO ===');
-      
-    } catch (error) {
-      console.error('ERRO ao adicionar gasto:', error);
-      alert('Erro ao salvar gasto: ' + error.message);
-    }
+      return novosGastos;
+    });
+    
+    // FORÇA RE-RENDER
+    setForceUpdate(prev => prev + 1);
+    
+    // Resetar form
+    setNovoGastoCartao({
+      cartaoId: cartoes[0]?.id || '',
+      descricao: '',
+      valor: '',
+      data: new Date().toISOString().split('T')[0],
+      categoria: 'outros',
+      parcelas: 1
+    });
+    
+    // Fechar modal
+    setModalGastoCartaoAberto(false);
+    
+    // Feedback
+    setMostrarSalvo(true);
+    setTimeout(() => setMostrarSalvo(false), 2000);
+    
+    console.log('=== FIM ADICIONAR GASTO ===');
   };
 
   const removerGastoCartao = (id) => {
@@ -439,38 +438,33 @@ export default function ControleFinanceiro() {
   };
 
   const calcularFaturaCartao = (cartaoId) => {
-    const agora = new Date();
-    const mesAtual = mesSelecionado;
-    const anoAtual = anoSelecionado;
+    console.log('Calculando fatura do cartão:', cartaoId, typeof cartaoId);
+    
+    // SIMPLIFICADO: Soma gastos do mês/ano selecionado (sem lógica de fechamento)
+    const gastosFiltrados = gastosCartao.filter(gasto => {
+      // Comparação flexível (string == number funciona)
+      const match = gasto.cartaoId == cartaoId;
+      
+      if (!match) return false;
 
-    return gastosCartao
-      .filter(gasto => {
-        if (gasto.cartaoId !== cartaoId) return false;
+      const dataGasto = new Date(gasto.data);
+      const mesGasto = dataGasto.getMonth();
+      const anoGasto = dataGasto.getFullYear();
 
-        const dataGasto = new Date(gasto.data);
-        const cartao = cartoes.find(c => c.id === cartaoId);
-        
-        if (!cartao) return false;
-
-        const diaFechamento = cartao.diaFechamento;
-        const mesGasto = dataGasto.getMonth();
-        const anoGasto = dataGasto.getFullYear();
-        const diaGasto = dataGasto.getDate();
-
-        let mesReferencia = mesGasto;
-        let anoReferencia = anoGasto;
-
-        if (diaGasto > diaFechamento) {
-          mesReferencia += 1;
-          if (mesReferencia > 11) {
-            mesReferencia = 0;
-            anoReferencia += 1;
-          }
-        }
-
-        return mesReferencia === mesAtual && anoReferencia === anoAtual;
-      })
-      .reduce((total, gasto) => total + (parseFloat(gasto.valor) || 0) / (gasto.parcelas || 1), 0);
+      // Compara diretamente com o mês/ano selecionado
+      const mesMatch = mesGasto === mesSelecionado && anoGasto === anoSelecionado;
+      
+      if (match && mesMatch) {
+        console.log(`  ✓ Gasto "${gasto.descricao}" incluído: R$ ${gasto.valor}`);
+      }
+      
+      return mesMatch;
+    });
+    
+    const total = gastosFiltrados.reduce((total, gasto) => total + (parseFloat(gasto.valor) || 0) / (gasto.parcelas || 1), 0);
+    console.log(`Total fatura cartão ${cartaoId}: R$ ${total.toFixed(2)}`);
+    
+    return total;
   };
 
   const renderOrcamento = () => {
@@ -1102,7 +1096,8 @@ export default function ControleFinanceiro() {
 
     console.log('=== RENDERIZANDO FATURA CARTÃO ===');
     console.log('Total de gastos no estado:', gastosCartao.length);
-    console.log('Mês selecionado:', mesSelecionado, '- Ano:', anoSelecionado);
+    console.log('TODOS OS GASTOS:', gastosCartao);
+    console.log('Mês selecionado:', mesSelecionado, '(', meses[mesSelecionado], ') - Ano:', anoSelecionado);
     
     // FILTRO SIMPLIFICADO: Mostra TODOS os gastos do mês/ano selecionado
     const gastosDoMes = gastosCartao.filter(gasto => {
@@ -1111,12 +1106,13 @@ export default function ControleFinanceiro() {
       const anoGasto = dataGasto.getFullYear();
       
       const match = mesGasto === mesSelecionado && anoGasto === anoSelecionado;
-      console.log(`Gasto: ${gasto.descricao} - Data: ${gasto.data} - Mês: ${mesGasto} - Ano: ${anoGasto} - Match: ${match}`);
+      console.log(`Gasto: ${gasto.descricao} - CartaoID: ${gasto.cartaoId} - Data: ${gasto.data} - Mês: ${mesGasto} - Ano: ${anoGasto} - Match: ${match}`);
       
       return match;
     });
     
     console.log('Gastos filtrados para o mês:', gastosDoMes.length);
+    console.log('Gastos que vão aparecer:', gastosDoMes);
 
     return (
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6 lg:space-y-8">
@@ -1277,8 +1273,14 @@ export default function ControleFinanceiro() {
                 <p className="text-center text-gray-500 py-8 text-sm md:text-base">Nenhum gasto neste mês</p>
               ) : (
                 gastosDoMes.slice().reverse().map(gasto => {
-                  const cartao = cartoes.find(c => c.id === gasto.cartaoId);
+                  // Comparação flexível (== ao invés de ===)
+                  const cartao = cartoes.find(c => c.id == gasto.cartaoId);
                   const cat = categorias.find(c => c.key === gasto.categoria);
+                  
+                  console.log('Renderizando gasto:', gasto.descricao);
+                  console.log('  - CartaoId do gasto:', gasto.cartaoId, typeof gasto.cartaoId);
+                  console.log('  - Cartões disponíveis:', cartoes.map(c => ({ id: c.id, tipo: typeof c.id, nome: c.nome })));
+                  console.log('  - Cartão encontrado:', cartao?.nome || 'NÃO ENCONTRADO');
                   
                   return (
                     <div key={gasto.id} className="bg-black/30 border-2 border-gray-700/50 rounded-xl md:rounded-2xl p-3 md:p-4 hover:scale-[1.02] transition-all">
@@ -1288,7 +1290,7 @@ export default function ControleFinanceiro() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm md:text-base font-bold text-white truncate">{gasto.descricao}</p>
                             <p className="text-xs md:text-sm text-gray-400 truncate">
-                              {cartao?.nome} - {new Date(gasto.data).toLocaleDateString('pt-BR')}
+                              {cartao?.nome || `Cartão ID: ${gasto.cartaoId}`} - {new Date(gasto.data).toLocaleDateString('pt-BR')}
                             </p>
                             {gasto.parcelas > 1 && (
                               <p className="text-xs text-blue-400">
@@ -1317,7 +1319,7 @@ export default function ControleFinanceiro() {
           </div>
         </div>
 
-        {/* MODAL DE CARTÃO - VERSÃO SIMPLIFICADA MOBILE */}
+        {/* MODAL DE CARTÃO - SEM FORM, SÓ ONCLICK */}
         {modalCartaoAberto && (
           <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl relative">
@@ -1336,7 +1338,7 @@ export default function ControleFinanceiro() {
                 {editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}
               </h2>
               
-              <form onSubmit={salvarCartao} className="space-y-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-green-400 mb-2">Nome do Cartão *</label>
                   <input
@@ -1345,7 +1347,6 @@ export default function ControleFinanceiro() {
                     onChange={(e) => setNovoCartao({...novoCartao, nome: e.target.value})}
                     placeholder="Ex: Nubank, Itaú..."
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                    required
                   />
                 </div>
 
@@ -1387,7 +1388,6 @@ export default function ControleFinanceiro() {
                     placeholder="0.00"
                     inputMode="decimal"
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                    required
                   />
                 </div>
 
@@ -1403,18 +1403,23 @@ export default function ControleFinanceiro() {
                     Cancelar
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={() => {
+                      console.log('BOTÃO SALVAR CARTÃO CLICADO!');
+                      const fakeEvent = { preventDefault: () => {}, stopPropagation: () => {} };
+                      salvarCartao(fakeEvent);
+                    }}
                     className="flex-1 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold shadow-lg min-h-[52px]"
                   >
                     {editandoCartao ? 'Atualizar' : 'Salvar'}
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
 
-        {/* MODAL DE GASTO DO CARTÃO - VERSÃO SIMPLIFICADA MOBILE */}
+        {/* MODAL DE GASTO DO CARTÃO - SEM FORM, SÓ ONCLICK */}
         {modalGastoCartaoAberto && (
           <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4">
             <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl p-4 md:p-6 max-w-md w-full shadow-2xl relative">
@@ -1430,14 +1435,13 @@ export default function ControleFinanceiro() {
                 Novo Gasto no Cartão
               </h2>
               
-              <form onSubmit={adicionarGastoCartao} className="space-y-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-green-400 mb-2">Cartão *</label>
                   <select
                     value={novoGastoCartao.cartaoId}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, cartaoId: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                    required
                   >
                     {cartoes.map(cartao => (
                       <option key={cartao.id} value={cartao.id}>{cartao.nome}</option>
@@ -1468,7 +1472,6 @@ export default function ControleFinanceiro() {
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, descricao: e.target.value})}
                     placeholder="Ex: Compra no supermercado"
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                    required
                   />
                 </div>
 
@@ -1483,7 +1486,6 @@ export default function ControleFinanceiro() {
                       placeholder="0.00"
                       inputMode="decimal"
                       className="w-full px-3 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                      required
                     />
                   </div>
 
@@ -1508,7 +1510,6 @@ export default function ControleFinanceiro() {
                     value={novoGastoCartao.data}
                     onChange={(e) => setNovoGastoCartao({...novoGastoCartao, data: e.target.value})}
                     className="w-full px-4 py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold focus:outline-none focus:ring-2 focus:ring-green-500 min-h-[48px]"
-                    required
                   />
                 </div>
 
@@ -1521,13 +1522,18 @@ export default function ControleFinanceiro() {
                     Cancelar
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={(e) => {
+                      console.log('BOTÃO ADICIONAR CLICADO!');
+                      const fakeEvent = { preventDefault: () => {} };
+                      adicionarGastoCartao(fakeEvent);
+                    }}
                     className="flex-1 py-4 rounded-xl bg-gradient-to-r from-green-600 to-emerald-600 text-black font-bold shadow-lg min-h-[52px]"
                   >
                     Adicionar
                   </button>
                 </div>
-              </form>
+              </div>
             </div>
           </div>
         )}
