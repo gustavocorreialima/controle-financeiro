@@ -360,11 +360,23 @@ export default function ControleFinanceiro() {
       
       console.log('Gasto criado:', gasto);
       
-      setGastosCartao(prevGastos => {
-        const novosGastos = [...prevGastos, gasto];
-        console.log('Novos gastos do cartão:', novosGastos);
-        return novosGastos;
-      });
+      // Atualiza o estado e salva imediatamente
+      const novosGastosCartao = [...gastosCartao, gasto];
+      setGastosCartao(novosGastosCartao);
+      
+      // Salva no localStorage imediatamente
+      const dadosParaSalvar = {
+        mesSelecionado,
+        anoSelecionado,
+        salariosPorMes,
+        orcamentosPorMes,
+        gastosDiarios,
+        gastosFixos,
+        cartoes,
+        gastosCartao: novosGastosCartao
+      };
+      localStorage.setItem('controleFinanceiro', JSON.stringify(dadosParaSalvar));
+      console.log('Dados salvos no localStorage:', dadosParaSalvar);
       
       setNovoGastoCartao({
         cartaoId: '',
@@ -376,7 +388,8 @@ export default function ControleFinanceiro() {
       });
       
       setModalGastoCartaoAberto(false);
-      salvarDados();
+      setMostrarSalvo(true);
+      setTimeout(() => setMostrarSalvo(false), 2000);
     } else {
       alert('Por favor, preencha todos os campos obrigatórios!');
     }
@@ -1277,15 +1290,14 @@ export default function ControleFinanceiro() {
         {modalCartaoAberto && (
           <div 
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-            onClick={(e) => {
+            onMouseDown={(e) => {
               if (e.target === e.currentTarget) {
                 setModalCartaoAberto(false);
                 setEditandoCartao(null);
               }
             }}
           >
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20"
-                 onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20">
               <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
                 {editandoCartao ? 'Editar Cartão' : 'Novo Cartão'}
               </h2>
@@ -1300,6 +1312,7 @@ export default function ControleFinanceiro() {
                     placeholder="Ex: Nubank, Itaú..."
                     className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -1347,7 +1360,8 @@ export default function ControleFinanceiro() {
                 <div className="flex gap-3 md:gap-4 pt-2">
                   <button
                     type="button"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.preventDefault();
                       setModalCartaoAberto(false);
                       setEditandoCartao(null);
                     }}
@@ -1371,14 +1385,13 @@ export default function ControleFinanceiro() {
         {modalGastoCartaoAberto && (
           <div 
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4"
-            onClick={(e) => {
+            onMouseDown={(e) => {
               if (e.target === e.currentTarget) {
                 setModalGastoCartaoAberto(false);
               }
             }}
           >
-            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20"
-                 onClick={(e) => e.stopPropagation()}>
+            <div className="bg-gradient-to-br from-gray-900 to-gray-800 border-2 border-green-500/50 rounded-2xl md:rounded-3xl p-4 md:p-6 lg:p-8 max-w-md w-full shadow-2xl shadow-green-500/20">
               <h2 className="text-xl md:text-2xl font-black text-green-400 mb-4 md:mb-6">
                 Novo Gasto no Cartão
               </h2>
@@ -1422,6 +1435,7 @@ export default function ControleFinanceiro() {
                     placeholder="Ex: Compra na Amazon..."
                     className="w-full px-3 md:px-4 py-2 md:py-3 rounded-xl bg-black/50 border-2 border-green-500/30 text-white font-bold placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-green-500 transition-all min-h-[44px] md:min-h-[52px] touch-manipulation"
                     required
+                    autoFocus
                   />
                 </div>
 
@@ -1467,7 +1481,10 @@ export default function ControleFinanceiro() {
                 <div className="flex gap-3 md:gap-4 pt-2">
                   <button
                     type="button"
-                    onClick={() => setModalGastoCartaoAberto(false)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setModalGastoCartaoAberto(false);
+                    }}
                     className="flex-1 py-3 md:py-4 rounded-xl bg-gray-700 hover:bg-gray-600 text-white font-bold transition-all min-h-[48px] touch-manipulation"
                   >
                     Cancelar
